@@ -7,6 +7,7 @@ from app.routers import auth_router, tasks_router
 
 # Load settings
 settings = get_settings()
+#change
 
 # Initialize FastAPI application
 app = FastAPI(
