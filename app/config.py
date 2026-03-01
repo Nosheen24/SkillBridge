@@ -6,6 +6,7 @@ from functools import lru_cache
 from typing import Union
 
 
+#change
 class Settings(BaseSettings):
 
     # Supabase Configuration
