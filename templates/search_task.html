@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>SkillBridge - Search Tasks</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/search_task.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="navbar">
+<h1>SkillBridge</h1>
+
+<div>
+<a href="/post-task">Post Task</a>
+<a href="/search">Search Tasks</a>
+<a href="/login">Login</a>
+</div>
+</div>
+
+<div class="main">
+
+<div class="container">
+
+<h2>Find Micro Tasks</h2>
+<p class="tagline">Search tasks posted by students</p>
+
+<form method="get" action="/tasks/search">
+
+<label>Keyword</label>
+<div class="input-group">
+<i class="fa-solid fa-magnifying-glass"></i>
+<input type="text" name="keyword" placeholder="Search by title or description">
+</div>
+
+<label>Category</label>
+<div class="input-group">
+<i class="fa-solid fa-layer-group"></i>
+<input type="text" name="category" placeholder="Example: Programming">
+</div>
+
+<label>Minimum Budget</label>
+<div class="input-group">
+<i class="fa-solid fa-dollar-sign"></i>
+<input type="number" step="0.01" name="min_budget" placeholder="Minimum budget">
+</div>
+
+<label>Maximum Budget</label>
+<div class="input-group">
+<i class="fa-solid fa-dollar-sign"></i>
+<input type="number" step="0.01" name="max_budget" placeholder="Maximum budget">
+</div>
+
+<label>Status</label>
+<div class="input-group">
+<select name="status">
+<option value="open">Open</option>
+<option value="assigned">Assigned</option>
+<option value="completed">Completed</option>
+</select>
+</div>
+
+<button type="submit">Search Tasks</button>
+
+</form>
+
+</div>
+
+</div>
+
+</body>
+</html>
