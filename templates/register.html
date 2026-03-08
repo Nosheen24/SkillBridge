@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>SkillBridge - Register</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+background:linear-gradient(135deg,#667eea,#764ba2);
+min-height:100vh;
+display:flex;
+flex-direction:column;
+}
+
+/* Navbar */
+
+.navbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:18px 50px;
+background:rgba(255,255,255,0.1);
+backdrop-filter:blur(12px);
+color:white;
+}
+
+.navbar h1{
+font-size:24px;
+font-weight:600;
+}
+
+.navbar a{
+color:white;
+text-decoration:none;
+margin-left:20px;
+font-size:15px;
+transition:0.3s;
+}
+
+.navbar a:hover{
+opacity:0.7;
+}
+
+/* Main */
+
+.main{
+flex:1;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+/* Card */
+
+.container{
+background:rgba(255,255,255,0.15);
+backdrop-filter:blur(20px);
+padding:40px;
+border-radius:16px;
+width:400px;
+box-shadow:0 20px 40px rgba(0,0,0,0.3);
+color:white;
+transition:0.4s;
+}
+
+.container:hover{
+transform:translateY(-5px);
+}
+
+h2{
+text-align:center;
+margin-bottom:8px;
+font-weight:600;
+}
+
+.tagline{
+text-align:center;
+font-size:14px;
+opacity:0.9;
+margin-bottom:25px;
+}
+
+/* Inputs */
+
+label{
+font-size:14px;
+}
+
+input{
+width:100%;
+padding:12px;
+margin-top:6px;
+margin-bottom:18px;
+border-radius:8px;
+border:none;
+outline:none;
+font-size:14px;
+}
+
+input:focus{
+box-shadow:0 0 6px rgba(255,255,255,0.6);
+}
+
+/* Button */
+
+button{
+width:100%;
+padding:13px;
+border:none;
+border-radius:8px;
+background:linear-gradient(90deg,#36d1dc,#5b86e5);
+color:white;
+font-size:16px;
+font-weight:500;
+cursor:pointer;
+transition:0.3s;
+}
+
+button:hover{
+transform:scale(1.04);
+box-shadow:0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Login link */
+
+.login{
+text-align:center;
+margin-top:18px;
+font-size:14px;
+}
+
+.login a{
+color:#fff;
+text-decoration:underline;
+}
+
+/* About */
+
+.about{
+margin-top:25px;
+font-size:13px;
+text-align:center;
+opacity:0.85;
+line-height:1.6;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="navbar">
+<h1>SkillBridge</h1>
+
+<div>
+<a href="#">Home</a>
+<a href="#">About</a>
+<a href="#">Login</a>
+</div>
+</div>
+
+<div class="main">
+
+<div class="container">
+
+<h2>Create Account</h2>
+<p class="tagline">Join students collaborating through skills</p>
+
+<form method="post" action="/register">
+
+<label>Name</label>
+<input type="text" name="name" placeholder="Enter your name" required>
+
+<label>Email</label>
+<input type="email" name="email" placeholder="Enter your email" required>
+
+<label>Password</label>
+<input type="password" name="password" placeholder="Create a password" required>
+
+<button type="submit">Register</button>
+
+</form>
+
+<div class="login">
+Already have an account? <a href="#">Login</a>
+</div>
+
+<div class="about">
+<strong>About SkillBridge</strong><br>
+SkillBridge is a platform where students can post and complete micro-tasks,
+share their skills, and collaborate within a trusted academic community.
+</div>
+
+</div>
+
+</div>
+
+</body>
+
+</html>
