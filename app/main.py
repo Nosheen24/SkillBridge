@@ -4,12 +4,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.routers import auth_router, tasks_router
-
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
-
-
-
+from fastapi.staticfiles import StaticFiles
 
 # Load settings
 settings = get_settings()
@@ -58,6 +55,15 @@ async def health_check():
     }
 
 
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/register")
+def register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
@@ -66,10 +72,3 @@ if __name__ == "__main__":
         port=8000,
         reload=settings.debug
     )
-
-
-templates = Jinja2Templates(directory="templates")
-
-@app.get("/register")
-def register_page(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
