@@ -5,6 +5,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.routers import auth_router, tasks_router
 
+from fastapi import Request
+from fastapi.templating import Jinja2Templates
+
+
+
+
 # Load settings
 settings = get_settings()
 
@@ -59,3 +65,10 @@ if __name__ == "__main__":
         port=8000,
         reload=settings.debug
     )
+
+
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/register")
+def register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
