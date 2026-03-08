@@ -67,6 +67,9 @@ def register_page(request: Request):
 @app.get("/post-task")
 def post_task_page(request: Request):
     return templates.TemplateResponse("post_task.html", {"request": request})
+@app.get("/login")
+def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
 
 if __name__ == "__main__":
     import uvicorn
