@@ -64,12 +64,13 @@ templates = Jinja2Templates(directory="templates")
 def register_page(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
 
-@app.get("/post-task")
-def post_task_page(request: Request):
-    return templates.TemplateResponse("post_task.html", {"request": request})
-@app.get("/login")
-def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+@app.get("/search")
+def search_page(request: Request):
+    return templates.TemplateResponse("search_task.html", {"request": request})
+
+@app.get("/browse")
+def browse_tasks_page(request: Request):
+    return templates.TemplateResponse("browse_task.html", {"request": request})
 
 if __name__ == "__main__":
     import uvicorn
