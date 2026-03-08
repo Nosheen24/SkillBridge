@@ -1,0 +1,162 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+}
+
+/* Navbar */
+.navbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:18px 50px;
+    background:rgba(255,255,255,0.1);
+    backdrop-filter:blur(12px);
+    color:white;
+}
+
+.navbar h1{
+    font-size:24px;
+    font-weight:600;
+}
+
+.navbar a{
+    color:white;
+    text-decoration:none;
+    margin-left:20px;
+    font-size:15px;
+    transition:0.3s;
+}
+
+.navbar a:hover{
+    opacity:0.7;
+}
+
+/* Main */
+.main{
+    flex:1;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+/* Card */
+.container{
+    background:rgba(255,255,255,0.15);
+    backdrop-filter:blur(20px);
+    padding:40px;
+    border-radius:16px;
+    width:400px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.3);
+    color:white;
+    transition:0.4s;
+}
+
+.container:hover{
+    transform:translateY(-5px);
+}
+
+h2{
+    text-align:center;
+    margin-bottom:8px;
+    font-weight:600;
+}
+
+.tagline{
+    text-align:center;
+    font-size:14px;
+    opacity:0.9;
+    margin-bottom:25px;
+}
+
+/* Inputs */
+label{
+    font-size:14px;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    margin-top:6px;
+    margin-bottom:18px;
+    border-radius:8px;
+    border:none;
+    outline:none;
+    font-size:14px;
+}
+
+input:focus{
+    box-shadow:0 0 6px rgba(255,255,255,0.6);
+}
+
+/* Input with icons */
+.input-group{
+    display:flex;
+    align-items:center;
+    background:white;
+    border-radius:8px;
+    margin-top:6px;
+    margin-bottom:18px;
+    padding:0 10px;
+}
+
+.input-group i{
+    color:#555;
+    margin-right:8px;
+}
+
+.input-group input{
+    border:none;
+    outline:none;
+    width:100%;
+    padding:12px;
+    font-size:14px;
+}
+
+/* Button */
+button{
+    width:100%;
+    padding:13px;
+    border:none;
+    border-radius:8px;
+    background:linear-gradient(90deg,#36d1dc,#5b86e5);
+    color:white;
+    font-size:16px;
+    font-weight:500;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    transform:scale(1.04);
+    box-shadow:0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Login link */
+.login{
+    text-align:center;
+    margin-top:18px;
+    font-size:14px;
+}
+
+.login a{
+    color:#fff;
+    text-decoration:underline;
+}
+
+/* About */
+.about{
+    margin-top:25px;
+    font-size:13px;
+    text-align:center;
+    opacity:0.85;
+    line-height:1.6;
+}
