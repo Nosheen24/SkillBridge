@@ -80,6 +80,7 @@ def search_page(request: Request):
 def browse_tasks_page(request: Request):
     return templates.TemplateResponse("browse_task.html", {"request": request})
 
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
