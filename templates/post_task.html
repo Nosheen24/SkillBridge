@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>SkillBridge - Post Task</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/post_task.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="navbar">
+<h1>SkillBridge</h1>
+
+<div>
+<a href="#">Dashboard</a>
+<a href="/register">Register</a>
+<a href="/login">Login</a>
+</div>
+</div>
+
+<div class="main">
+
+<div class="container">
+
+<h2>Post a Micro Task</h2>
+<p class="tagline">Share small tasks and collaborate with students</p>
+
+<form method="post" action="/tasks">
+
+<label>Task Title</label>
+<div class="input-group">
+<i class="fa-solid fa-pen"></i>
+<input type="text" name="title" placeholder="Enter task title" required minlength="5">
+</div>
+
+<label>Description</label>
+<textarea name="description" placeholder="Explain the task in detail" required minlength="10"></textarea>
+
+<label>Category</label>
+<div class="input-group">
+<i class="fa-solid fa-layer-group"></i>
+<input type="text" name="category" placeholder="Example: Programming, Design" required>
+</div>
+
+<label>Budget</label>
+<div class="input-group">
+<i class="fa-solid fa-dollar-sign"></i>
+<input type="number" step="0.01" name="budget" placeholder="Enter budget" required>
+</div>
+
+<label>Deadline</label>
+<div class="input-group">
+<i class="fa-solid fa-calendar"></i>
+<input type="datetime-local" name="deadline">
+</div>
+
+<label>Tags</label>
+<div class="input-group">
+<i class="fa-solid fa-tags"></i>
+<input type="text" name="tags" placeholder="Example: python, fastapi, api">
+</div>
+
+<button type="submit">Post Task</button>
+
+</form>
+
+</div>
+
+</div>
+
+</body>
+
+</html>
