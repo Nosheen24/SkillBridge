@@ -1,6 +1,6 @@
 
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from app.models import (
     UserRegisterRequest,
     UserRegisterResponse,
@@ -11,6 +11,7 @@ from app.models import (
 )
 from app.database import supabase
 from datetime import datetime
+from app.auth import get_current_user
 
 router = APIRouter(
     prefix="/auth",
@@ -154,4 +155,21 @@ async def login_user(credentials: UserLoginRequest):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Login failed: {str(e)}"
+        )
+@router.post(
+    "/logout",
+    status_code=status.HTTP_200_OK,
+    summary="SKIL-9: User Logout",
+    description="Logout the currently authenticated user"
+)
+async def logout_user(
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        supabase.auth.sign_out()
+        return {"message": "Logged out successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Logout failed: {str(e)}"
         )
