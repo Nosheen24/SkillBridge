@@ -7,6 +7,8 @@ from typing import Union
 
 
 
+#change
+#juwehfu
 class Settings(BaseSettings):
 
     # Supabase Configuration

@@ -4,6 +4,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.routers import auth_router, tasks_router
+from fastapi import Request
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
 # Load settings
 settings = get_settings()
@@ -50,6 +53,32 @@ async def health_check():
         "service": settings.app_name,
         "version": settings.app_version
     }
+
+
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/register")
+def register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
+@app.get("/login")
+def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.get("/post-task")
+def post_task_page(request: Request):
+    return templates.TemplateResponse("post_task.html", {"request": request})
+
+@app.get("/search")
+def search_page(request: Request):
+    return templates.TemplateResponse("search_task.html", {"request": request})
+
+@app.get("/browse")
+def browse_tasks_page(request: Request):
+    return templates.TemplateResponse("browse_task.html", {"request": request})
 
 
 if __name__ == "__main__":

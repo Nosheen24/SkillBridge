@@ -133,3 +133,6 @@ class ErrorResponse(BaseModel):
 # Update forward references
 UserLoginResponse.model_rebuild()
 TaskResponse.model_rebuild()
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
