@@ -247,3 +247,38 @@ async def get_task(task_id: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch task: {str(e)}"
         )
+
+
+@router.post(
+    "/{task_id}/apply",
+    status_code=status.HTTP_201_CREATED,
+    summary="SKIL-15: Apply/Bid on Task",
+    description="Apply to work on a task (requires authentication)"
+)
+async def apply_for_task(
+    task_id: str,
+    message: str = "",
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        task = supabase.table("tasks").select("*").eq("id", task_id).execute()
+        if not task.data:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+        existing = supabase.table("task_applications").select("*").eq(
+            "task_id", task_id).eq("applicant_id", current_user.id).execute()
+        if existing.data:
+            raise HTTPException(status_code=400, detail="Already applied for this task")
+
+        application = supabase.table("task_applications").insert({
+            "task_id": task_id,
+            "applicant_id": current_user.id,
+            "message": message,
+            "status": "pending"
+        }).execute()
+
+        return {"message": "Application submitted successfully", "data": application.data[0]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Application failed: {str(e)}")
