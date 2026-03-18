@@ -1,22 +1,27 @@
 
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from app.models import (
     UserRegisterRequest,
     UserRegisterResponse,
     UserLoginRequest,
     UserLoginResponse,
     UserProfile,
-    ErrorResponse
+    ErrorResponse,
+    PasswordResetRequest
 )
 from app.database import supabase
+from app.auth import get_current_user
 from datetime import datetime
-
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"]
 )
 
+from app.config import get_settings
+settings = get_settings()
+from supabase import create_client
+service_client = create_client(settings.supabase_url, settings.supabase_service_key)
 
 @router.post(
     "/register",
@@ -154,4 +159,20 @@ async def login_user(credentials: UserLoginRequest):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Login failed: {str(e)}"
+        )
+
+@router.post(
+    "/password-reset",
+    status_code=status.HTTP_200_OK,
+    summary="SKIL-10: Password Reset",
+    description="Send a password reset email to the user"
+)
+async def password_reset(request: PasswordResetRequest):
+    try:
+        service_client.auth.reset_password_email(request.email)
+        return {"message": "Password reset email sent successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Password reset failed: {str(e)}"
         )
