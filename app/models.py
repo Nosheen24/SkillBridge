@@ -136,3 +136,6 @@ TaskResponse.model_rebuild()
 
 class PasswordResetRequest(BaseModel):
     email: EmailStr
+
+class SetNewPasswordRequest(BaseModel):
+    new_password: str = Field(..., min_length=6)

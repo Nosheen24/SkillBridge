@@ -8,11 +8,14 @@ from app.models import (
     UserLoginResponse,
     UserProfile,
     ErrorResponse,
-    PasswordResetRequest
+    PasswordResetRequest,
+    SetNewPasswordRequest
 )
 from app.database import supabase
 from app.auth import get_current_user
 from datetime import datetime
+
+
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"]
@@ -87,3 +90,14 @@ async def password_reset(request: PasswordResetRequest):
             detail=f"Password reset failed: {str(e)}"
         )
         raise HTTPException(status_code=400, detail=f"Password reset failed: {str(e)}")
+
+@router.post("/set-new-password", status_code=200, summary="SKIL-10: Set New Password")
+async def set_new_password(
+    request: SetNewPasswordRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        supabase.auth.update_user({"password": request.new_password})
+        return {"message": "Password updated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Password update failed: {str(e)}")
