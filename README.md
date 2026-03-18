@@ -12,6 +12,16 @@ This implementation includes all Sprint 1 backend tasks:
 - **SKIL-12**: Browse Tasks API
 - **SKIL-13**: Search Tasks API
 
+## Sprint 2 - Task Completion
+
+This implementation includes all Sprint 2 backend tasks:
+
+- **SKIL-9**: User Logout API
+- **SKIL-10**: Password Reset & Set New Password API
+- **SKIL-14**: Mark Task Complete API
+- **SKIL-15**: Apply/Bid on Task API
+- **SKIL-16**: View Applicants API
+
 ## Tech Stack
 
 - **Framework**: FastAPI 0.109.0
@@ -95,7 +105,7 @@ pip install -r requirements.txt
 2. Copy the following:
    - Project URL
    - `anon` `public` key (for SUPABASE_KEY)
-   - `service_role` key (optional, for admin operations)
+   - `service_role` key (for SUPABASE_SERVICE_KEY)
 
 ### 6. Configure Environment Variables
 
@@ -123,7 +133,7 @@ ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 python Main.py
 
 # OR using uvicorn directly
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 The API will be available at:
@@ -133,7 +143,7 @@ The API will be available at:
 
 ## API Endpoints
 
-### Authentication
+### Authentication (Sprint 1)
 
 #### POST /auth/register (SKIL-7)
 Register a new user account
@@ -161,8 +171,7 @@ Register a new user account
     "id": "uuid-here",
     "email": "student@example.com",
     "full_name": "John Doe",
-    "username": "johndoe",
-    ...
+    "username": "johndoe"
   }
 }
 ```
@@ -186,21 +195,67 @@ Authenticate user and get access token
   "expires_in": 3600,
   "user": {
     "id": "uuid-here",
-    "email": "student@example.com",
-    ...
+    "email": "student@example.com"
   }
 }
 ```
 
-### Tasks
+### Authentication (Sprint 2)
+
+#### POST /auth/logout (SKIL-9)
+Logout the currently authenticated user
+
+**Headers:** `Authorization: Bearer <access-token>`
+
+**Response:**
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+
+#### POST /auth/password-reset (SKIL-10)
+Send password reset email to user
+
+**Request Body:**
+```json
+{
+  "email": "student@example.com"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Password reset email sent successfully"
+}
+```
+
+#### POST /auth/set-new-password (SKIL-10)
+Set new password after reset (requires authentication)
+
+**Headers:** `Authorization: Bearer <access-token>`
+
+**Request Body:**
+```json
+{
+  "new_password": "newpassword123"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Password updated successfully"
+}
+```
+
+### Tasks (Sprint 1)
 
 #### POST /tasks/ (SKIL-11)
 Create a new micro-task (requires authentication)
 
-**Headers:**
-```
-Authorization: Bearer <access-token>
-```
+**Headers:** `Authorization: Bearer <access-token>`
 
 **Request Body:**
 ```json
@@ -219,20 +274,9 @@ Authorization: Bearer <access-token>
 {
   "id": "task-uuid",
   "title": "Build a React Component",
-  "description": "Need a reusable React component for user profiles",
-  "category": "Frontend Development",
-  "budget": 50.00,
   "status": "open",
   "creator_id": "user-uuid",
-  "deadline": "2024-04-01T10:00:00Z",
-  "tags": ["React", "JavaScript", "UI"],
-  "created_at": "2024-03-01T10:00:00Z",
-  "creator": {
-    "id": "user-uuid",
-    "full_name": "John Doe",
-    "username": "johndoe",
-    "email": "student@example.com"
-  }
+  "budget": 50.00
 }
 ```
 
@@ -244,26 +288,10 @@ Browse all tasks
 - `limit`: Max results (1-100, default: 50)
 - `offset`: Pagination offset (default: 0)
 
-**Example:**
-```
-GET /tasks/?status_filter=open&limit=10&offset=0
-```
-
 **Response:**
 ```json
 {
-  "tasks": [
-    {
-      "id": "task-uuid",
-      "title": "Build a React Component",
-      ...
-      "creator": {
-        "id": "user-uuid",
-        "full_name": "John Doe",
-        ...
-      }
-    }
-  ],
+  "tasks": [...],
   "total": 25
 }
 ```
@@ -277,13 +305,6 @@ Search tasks by keyword and filters
 - `min_budget`: Minimum budget
 - `max_budget`: Maximum budget
 - `status_filter`: Filter by status (default: "open")
-- `limit`: Max results (1-100, default: 50)
-- `offset`: Pagination offset (default: 0)
-
-**Example:**
-```
-GET /tasks/search?keyword=react&category=Frontend%20Development&min_budget=20&max_budget=100
-```
 
 **Response:**
 ```json
@@ -301,8 +322,73 @@ Get detailed information about a specific task
 {
   "id": "task-uuid",
   "title": "Build a React Component",
-  ...
   "creator": {...}
+}
+```
+
+### Tasks (Sprint 2)
+
+#### POST /tasks/{task_id}/apply (SKIL-15)
+Apply/Bid on a task (requires authentication)
+
+**Headers:** `Authorization: Bearer <access-token>`
+
+**Request Body:**
+```json
+{
+  "message": "I can help with this task"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Application submitted successfully",
+  "data": {
+    "task_id": "uuid",
+    "applicant_id": "uuid",
+    "message": "I can help with this task",
+    "status": "pending"
+  }
+}
+```
+
+#### GET /tasks/{task_id}/applicants (SKIL-16)
+View all applicants for a task (only task creator)
+
+**Headers:** `Authorization: Bearer <access-token>`
+
+**Response:**
+```json
+{
+  "task_id": "uuid",
+  "total_applicants": 1,
+  "applicants": [
+    {
+      "id": "uuid",
+      "message": "I can help",
+      "status": "pending",
+      "profiles": {
+        "full_name": "John Doe",
+        "email": "john@example.com"
+      }
+    }
+  ]
+}
+```
+
+#### PATCH /tasks/{task_id}/complete (SKIL-14)
+Mark a task as complete (only task creator)
+
+**Headers:** `Authorization: Bearer <access-token>`
+
+**Response:**
+```json
+{
+  "message": "Task marked as complete",
+  "data": {
+    "status": "completed"
+  }
 }
 ```
 
@@ -330,11 +416,19 @@ curl -X POST http://localhost:8000/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password123"}'
 
-# Create Task (with token)
-curl -X POST http://localhost:8000/tasks/ \
-  -H "Content-Type: application/json" \
+# Logout
+curl -X POST http://localhost:8000/auth/logout \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+
+# Apply for Task
+curl -X POST http://localhost:8000/tasks/TASK_ID/apply \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{"title":"Test Task","description":"This is a test task","category":"Testing","budget":25.50}'
+  -H "Content-Type: application/json" \
+  -d '{"message":"I can help with this task"}'
+
+# Mark Task Complete
+curl -X PATCH http://localhost:8000/tasks/TASK_ID/complete \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
 ## Database Schema
@@ -371,8 +465,6 @@ Import the following base URL:
 http://localhost:8000
 ```
 
-Create requests for each endpoint following the API documentation above.
-
 ## Development
 
 ### Adding New Endpoints
@@ -405,8 +497,6 @@ Enable debug mode in `.env`:
 DEBUG=True
 ```
 
-This will show detailed error messages and auto-reload on code changes.
-
 ## Sprint 1 Completion Checklist
 
 - [x] SKIL-7: User Registration API
@@ -416,6 +506,19 @@ This will show detailed error messages and auto-reload on code changes.
 - [x] SKIL-13: Search Tasks API
 - [x] Supabase Database Schema
 - [x] JWT Authentication
+- [x] Input Validation
+- [x] Error Handling
+- [x] API Documentation
+
+## Sprint 2 Completion Checklist
+
+- [x] SKIL-9: User Logout API
+- [x] SKIL-10: Password Reset API
+- [x] SKIL-10: Set New Password API
+- [x] SKIL-14: Mark Task Complete API
+- [x] SKIL-15: Apply/Bid on Task API
+- [x] SKIL-16: View Applicants API
+- [x] JWT Authentication on all protected routes
 - [x] Input Validation
 - [x] Error Handling
 - [x] API Documentation
@@ -431,12 +534,12 @@ This will show detailed error messages and auto-reload on code changes.
 
 ## Contributors
 
-- Backend Developer: [Your Name]
-- Scrum Master: [Name]
-- Product Owner: [Name]
-- Frontend Developer: [Name]
+- Backend Developer + QA: Nosheen
+- Scrum Master: Ujala Kiran
+- Product Owner: Maheen
+- Frontend Developer: Aniqa Saba
+
 
 ## License
 
-This project is part of an academic course on Software Engineering. This is my backend.
-This project is part of an academic course on Software Engineering.This is final.
+This project is part of an academic course on Software Engineering.
