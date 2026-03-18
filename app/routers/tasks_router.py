@@ -282,3 +282,37 @@ async def apply_for_task(
         raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Application failed: {str(e)}")
+
+@router.get(
+    "/{task_id}/applicants",
+    status_code=status.HTTP_200_OK,
+    summary="SKIL-16: View Applicants",
+    description="View all applicants for a task (only task creator can view)"
+)
+async def view_applicants(
+    task_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        # Check task exists and user is the creator
+        task = supabase.table("tasks").select("*").eq("id", task_id).execute()
+        if not task.data:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+        if task.data[0]["creator_id"] != current_user.id:
+            raise HTTPException(status_code=403, detail="Only task creator can view applicants")
+
+        # Get all applications for this task
+        applications = supabase.table("task_applications").select(
+            "*, profiles!task_applications_applicant_id_fkey(*)"
+        ).eq("task_id", task_id).execute()
+
+        return {
+            "task_id": task_id,
+            "total_applicants": len(applications.data),
+            "applicants": applications.data
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to fetch applicants: {str(e)}")
