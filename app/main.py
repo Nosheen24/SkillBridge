@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 # Load settings
 settings = get_settings()
-#change
+
 
 # Initialize FastAPI application
 app = FastAPI(
