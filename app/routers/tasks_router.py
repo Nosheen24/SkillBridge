@@ -316,3 +316,38 @@ async def view_applicants(
         raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to fetch applicants: {str(e)}")
+
+
+@router.patch(
+    "/{task_id}/complete",
+    status_code=status.HTTP_200_OK,
+    summary="SKIL-14: Mark Task Complete",
+    description="Mark a task as complete (only task creator can do this)"
+)
+async def mark_task_complete(
+    task_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        # Check task exists and user is the creator
+        task = supabase.table("tasks").select("*").eq("id", task_id).execute()
+        if not task.data:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+        if task.data[0]["creator_id"] != current_user.id:
+            raise HTTPException(status_code=403, detail="Only task creator can mark task as complete")
+
+        if task.data[0]["status"] == "completed":
+            raise HTTPException(status_code=400, detail="Task is already completed")
+
+        # Update task status to completed
+        updated = supabase.table("tasks").update(
+            {"status": "completed"}
+        ).eq("id", task_id).execute()
+
+        return {"message": "Task marked as complete", "data": updated.data[0]}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to mark task complete: {str(e)}")
