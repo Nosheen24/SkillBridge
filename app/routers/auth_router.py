@@ -1,3 +1,5 @@
+
+
 from fastapi import APIRouter, HTTPException, status, Depends
 from app.models import (
     UserRegisterRequest,
@@ -10,6 +12,16 @@ from app.models import (
 )
 from app.database import supabase
 from app.auth import get_current_user
+from datetime import datetime
+router = APIRouter(
+    prefix="/auth",
+    tags=["Authentication"]
+)
+
+from app.config import get_settings
+settings = get_settings()
+from supabase import create_client
+service_client = create_client(settings.supabase_url, settings.supabase_service_key)
 from app.config import get_settings
 from supabase import create_client
 from datetime import datetime
@@ -51,7 +63,10 @@ async def login_user(credentials: UserLoginRequest):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Login failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Login failed: {str(e)}"
+        )
 
 @router.post("/logout", status_code=200, summary="SKIL-9: User Logout")
 async def logout_user(current_user: dict = Depends(get_current_user)):
@@ -67,4 +82,8 @@ async def password_reset(request: PasswordResetRequest):
         service_client.auth.reset_password_email(request.email)
         return {"message": "Password reset email sent successfully"}
     except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Password reset failed: {str(e)}"
+        )
         raise HTTPException(status_code=400, detail=f"Password reset failed: {str(e)}")
