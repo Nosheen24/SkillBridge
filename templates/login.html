@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>SkillBridge - Login</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/login.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="navbar">
+<h1>SkillBridge</h1>
+
+<div>
+<a href="#">Home</a>
+<a href="#">About</a>
+<a href="/register">Register</a>
+</div>
+</div>
+
+<div class="main">
+
+<div class="container">
+
+<h2>Welcome Back</h2>
+<p class="tagline">Login to continue collaborating</p>
+
+<form method="post" action="/auth/login">
+
+<label>Email</label>
+<div class="input-group">
+<i class="fa-solid fa-envelope"></i>
+<input type="email" name="email" placeholder="Enter your email" required>
+</div>
+
+<label>Password</label>
+<div class="input-group">
+<i class="fa-solid fa-lock"></i>
+<input type="password" name="password" placeholder="Enter your password" required>
+</div>
+
+<button type="submit">Login</button>
+
+</form>
+
+<div class="login">
+Don't have an account? <a href="/register">Register</a>
+</div>
+
+<div class="about">
+<strong>SkillBridge</strong><br>
+A platform where students collaborate by exchanging skills,
+completing micro-tasks, and building real experience together.
+</div>
+
+</div>
+
+</div>
+
+</body>
+
+</html>
