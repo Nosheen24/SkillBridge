@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SkillBridge - Post Task</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/post_task.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  .msg { padding:12px; border-radius:8px; margin-bottom:16px; display:none; }
+  .success { background:#e0f7e9; color:#2e7d32; }
+  .error { background:#fdecea; color:#c62828; }
+  .logout-btn { background:#ff4d4d; border:none; color:white; padding:8px 16px; border-radius:8px; cursor:pointer; font-family:Poppins; }
+</style>
+</head>
+<body>
+<div class="navbar">
+  <h1>SkillBridge</h1>
+  <div>
+    <a href="/browse">Browse</a>
+    <a href="/search">Search</a>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="main">
+<div class="container">
+<h2>Post a Micro Task</h2>
+<p class="tagline">Share small tasks and collaborate with students</p>
+
+<div id="msg" class="msg"></div>
+
+<form id="postTaskForm">
+
+<label>Task Title</label>
+<div class="input-group">
+<i class="fa-solid fa-pen"></i>
+<input type="text" id="title" placeholder="Enter task title" required minlength="5">
+</div>
+
+<label>Description</label>
+<textarea id="description" placeholder="Explain the task in detail" required minlength="10"></textarea>
+
+<label>Category</label>
+<div class="input-group">
+<i class="fa-solid fa-layer-group"></i>
+<input type="text" id="category" placeholder="Example: Programming, Design" required>
+</div>
+
+<label>Budget</label>
+<div class="input-group">
+<i class="fa-solid fa-dollar-sign"></i>
+<input type="number" step="0.01" id="budget" placeholder="Enter budget" required>
+</div>
+
+<label>Deadline</label>
+<div class="input-group">
+<i class="fa-solid fa-calendar"></i>
+<input type="datetime-local" id="deadline">
+</div>
+
+<label>Tags</label>
+<div class="input-group">
+<i class="fa-solid fa-tags"></i>
+<input type="text" id="tags" placeholder="Example: python, fastapi, api">
+</div>
+
+<button type="submit" id="postBtn">Post Task</button>
+</form>
+</div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000';
+const token = localStorage.getItem('access_token');
+
+if (!token) window.location.href = '/login';
+
+function logout() {
+  localStorage.clear();
+  window.location.href = '/login';
+}
+
+document.getElementById('postTaskForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const msg = document.getElementById('msg');
+  const btn = document.getElementById('postBtn');
+  msg.style.display = 'none';
+  btn.textContent = 'Posting...'; btn.disabled = true;
+
+  const tagsRaw = document.getElementById('tags').value;
+  const tagsArray = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
+  const deadline = document.getElementById('deadline').value;
+
+  const data = {
+    title: document.getElementById('title').value,
+    description: document.getElementById('description').value,
+    category: document.getElementById('category').value,
+    budget: parseFloat(document.getElementById('budget').value),
+    tags: tagsArray,
+    deadline: deadline ? new Date(deadline).toISOString() : null
+  };
+
+  try {
+    const res = await fetch(`${API}/tasks/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if (res.ok) {
+      msg.textContent = 'Task posted successfully!';
+      msg.className = 'msg success'; msg.style.display = 'block';
+      setTimeout(() => window.location.href = '/browse', 1500);
+    } else {
+      msg.textContent = result.detail || 'Failed to post task.';
+      msg.className = 'msg error'; msg.style.display = 'block';
+    }
+  } catch(e) {
+    msg.textContent = 'Cannot connect to server.';
+    msg.className = 'msg error'; msg.style.display = 'block';
+  }
+  btn.textContent = 'Post Task'; btn.disabled = false;
+});
+</script>
+</body>
+</html>

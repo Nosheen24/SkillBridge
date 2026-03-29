@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SkillBridge - Applicants</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  * { font-family: Poppins, sans-serif; margin:0; padding:0; box-sizing:border-box; }
+  body { background: linear-gradient(135deg, #6c63ff, #a78bfa); min-height:100vh; }
+  .navbar { display:flex; justify-content:space-between; align-items:center; padding:16px 32px; background:#6c63ff; color:white; }
+  .navbar h1 { font-size:1.4rem; }
+  .navbar a { color:white; text-decoration:none; margin-left:16px; }
+  .logout-btn { background:#ff4d4d; border:none; color:white; padding:8px 16px; border-radius:8px; cursor:pointer; font-family:Poppins; }
+  .container { max-width:800px; margin:40px auto; background:white; border-radius:16px; padding:32px; }
+  .applicant-card { border:1px solid #eee; border-radius:12px; padding:16px; margin:12px 0; }
+  .back-btn { background:#6c63ff; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-family:Poppins; margin-bottom:20px; }
+</style>
+</head>
+<body>
+<div class="navbar">
+  <h1>SkillBridge</h1>
+  <div>
+    <a href="/browse">Browse</a>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</div>
+<div class="container">
+  <button class="back-btn" onclick="window.location.href='/browse'">← Back to Tasks</button>
+  <h2>Task Applicants</h2>
+  <div id="applicantsContainer">Loading...</div>
+</div>
+<script>
+const API = 'http://127.0.0.1:8000';
+const token = localStorage.getItem('access_token');
+const taskId = new URLSearchParams(window.location.search).get('task_id');
+
+function logout() {
+  localStorage.clear();
+  window.location.href = '/login';
+}
+
+async function loadApplicants() {
+  if (!token) return window.location.href = '/login';
+  if (!taskId) { document.getElementById('applicantsContainer').innerHTML = '<p>No task selected.</p>'; return; }
+  try {
+    const res = await fetch(`${API}/tasks/${taskId}/applicants`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    const container = document.getElementById('applicantsContainer');
+    if (!res.ok) { container.innerHTML = `<p style="color:red">${data.detail}</p>`; return; }
+    if (!data.applicants || data.applicants.length === 0) {
+      container.innerHTML = '<p>No applicants yet.</p>'; return;
+    }
+    container.innerHTML = `<p><strong>Total: ${data.total_applicants} applicants</strong></p>` +
+      data.applicants.map(app => `
+        <div class="applicant-card">
+          <h3>${app.profiles?.full_name || app.profiles?.username || 'Unknown'}</h3>
+          <p><strong>Email:</strong> ${app.profiles?.email || 'N/A'}</p>
+          <p><strong>University:</strong> ${app.profiles?.university || 'N/A'}</p>
+          <p><strong>Message:</strong> ${app.message || 'No message'}</p>
+          <p><strong>Status:</strong> ${app.status}</p>
+        </div>
+      `).join('');
+  } catch(e) { document.getElementById('applicantsContainer').innerHTML = '<p>Error loading applicants.</p>'; }
+}
+loadApplicants();
+</script>
+</body>
+</html>
