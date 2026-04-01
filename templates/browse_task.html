@@ -1,125 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
 <title>SkillBridge - Browse Tasks</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/css/browse_task.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+<style>
+  .navbar { display:flex; justify-content:space-between; align-items:center; padding:16px 32px; background:#6c63ff; color:white; }
+  .navbar h1 { font-size:1.4rem; margin:0; }
+  .navbar a { color:white; text-decoration:none; margin-left:16px; font-size:0.9rem; }
+  .logout-btn { background:#ff4d4d; border:none; color:white; padding:8px 16px; border-radius:8px; cursor:pointer; font-family:Poppins; }
+  .task-card { background:white; border-radius:12px; padding:20px; margin:16px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+  .apply-btn { background:#6c63ff; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-family:Poppins; }
+  .apply-btn:disabled { background:#aaa; cursor:not-allowed; }
+  .complete-btn { background:#28a745; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-family:Poppins; margin-left:8px; }
+  .view-applicants-btn { background:#ff9800; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-family:Poppins; margin-left:8px; }
+  .tasks-container { max-width:900px; margin:0 auto; padding:20px; }
+  .tag { background:#e8e4ff; color:#6c63ff; padding:4px 10px; border-radius:20px; font-size:0.8rem; margin-right:4px; }
+  .status-badge { padding:4px 10px; border-radius:20px; font-size:0.8rem; }
+  .status-open { background:#e0f7e9; color:#2e7d32; }
+  .status-completed { background:#fce4ec; color:#c62828; }
+  .msg { padding:12px; border-radius:8px; margin:8px 0; display:none; }
+  .success { background:#e0f7e9; color:#2e7d32; }
+  .error { background:#fdecea; color:#c62828; }
+</style>
 </head>
-
 <body>
-
 <div class="navbar">
-<h1>SkillBridge</h1>
-
-<div>
-<a href="/post-task">Post Task</a>
-<a href="/search">Search</a>
-<a href="/login">Login</a>
+  <h1>SkillBridge</h1>
+  <div>
+    <a href="/browse">Browse</a>
+    <a href="/search">Search</a>
+    <a href="/post-task">Post Task</a>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
 </div>
-</div>
-
-<div class="main">
-
-<h2 class="page-title">Browse Micro Tasks</h2>
 
 <div class="tasks-container">
-
-<!-- Task Card -->
-<div class="task-card">
-
-<h3>Build FastAPI Endpoint</h3>
-
-<p class="description">
-Need help creating a FastAPI endpoint for authentication and database integration.
-</p>
-
-<div class="task-meta">
-
-<span class="category">
-<i class="fa-solid fa-layer-group"></i>
-Programming
-</span>
-
-<span class="budget">
-<i class="fa-solid fa-dollar-sign"></i>
-$25
-</span>
-
-<span class="status open">
-Open
-</span>
-
+  <h2>Browse Tasks</h2>
+  <div id="msg" class="msg"></div>
+  <div id="tasksContainer">Loading tasks...</div>
 </div>
 
-<div class="task-footer">
+<script>
+const API = 'http://127.0.0.1:8000';
+const token = localStorage.getItem('access_token');
+const userId = localStorage.getItem('user_id');
 
-<span>
-<i class="fa-solid fa-user"></i>
-JohnDoe
-</span>
+function showMsg(text, type) {
+  const m = document.getElementById('msg');
+  m.textContent = text;
+  m.className = 'msg ' + type;
+  m.style.display = 'block';
+  setTimeout(() => m.style.display = 'none', 3000);
+}
 
-<span>
-<i class="fa-solid fa-calendar"></i>
-Deadline: 2026-07-01
-</span>
+async function logout() {
+  try {
+    await fetch(`${API}/auth/logout`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  } catch(e) {}
+  localStorage.clear();
+  window.location.href = '/login';
+}
 
-</div>
+async function applyTask(taskId) {
+  if (!token) return window.location.href = '/login';
+  const msg = prompt('Enter your message/bid:') || '';
+  try {
+    const res = await fetch(`${API}/tasks/${taskId}/apply?message=${encodeURIComponent(msg)}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (res.ok) showMsg('Applied successfully!', 'success');
+    else showMsg(data.detail || 'Failed to apply', 'error');
+  } catch(e) { showMsg('Error applying', 'error'); }
+}
 
-</div>
+async function markComplete(taskId) {
+  if (!token) return window.location.href = '/login';
+  if (!confirm('Mark this task as complete?')) return;
+  try {
+    const res = await fetch(`${API}/tasks/${taskId}/complete`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (res.ok) { showMsg('Task marked complete!', 'success'); loadTasks(); }
+    else showMsg(data.detail || 'Failed', 'error');
+  } catch(e) { showMsg('Error', 'error'); }
+}
 
-<!-- Another Task -->
+async function viewApplicants(taskId) {
+  if (!token) return window.location.href = '/login';
+  window.location.href = `/applicants?task_id=${taskId}`;
+}
 
-<div class="task-card">
+async function loadTasks() {
+  try {
+    const res = await fetch(`${API}/tasks/`);
+    const data = await res.json();
+    const container = document.getElementById('tasksContainer');
+    if (!data.tasks || data.tasks.length === 0) {
+      container.innerHTML = '<p>No tasks found.</p>'; return;
+    }
+    container.innerHTML = data.tasks.map(task => `
+      <div class="task-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3>${task.title}</h3>
+          <span class="status-badge status-${task.status}">${task.status}</span>
+        </div>
+        <p>${task.description || 'No description'}</p>
+        <p><strong>Budget:</strong> Rs. ${task.budget || 'N/A'}</p>
+        <p><strong>Posted by:</strong> ${task.creator?.full_name || task.creator?.username || 'Unknown'}</p>
+        <div style="margin-top:12px;">
+          ${task.status === 'open' && task.creator_id !== userId ? `<button class="apply-btn" onclick="applyTask('${task.id}')">Apply</button>` : ''}
+          ${task.creator_id === userId && task.status === 'open' ? `<button class="complete-btn" onclick="markComplete('${task.id}')">Mark Complete</button>` : ''}
+          ${task.creator_id === userId ? `<button class="view-applicants-btn" onclick="viewApplicants('${task.id}')">View Applicants</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch(e) { document.getElementById('tasksContainer').innerHTML = '<p>Error loading tasks.</p>'; }
+}
 
-<h3>Logo Design</h3>
-
-<p class="description">
-Design a simple logo for a student startup project.
-</p>
-
-<div class="task-meta">
-
-<span class="category">
-<i class="fa-solid fa-layer-group"></i>
-Design
-</span>
-
-<span class="budget">
-<i class="fa-solid fa-dollar-sign"></i>
-$15
-</span>
-
-<span class="status open">
-Open
-</span>
-
-</div>
-
-<div class="task-footer">
-
-<span>
-<i class="fa-solid fa-user"></i>
-Sarah
-</span>
-
-<span>
-<i class="fa-solid fa-calendar"></i>
-Deadline: 2026-07-05
-</span>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
+loadTasks();
+</script>
 </body>
-
 </html>

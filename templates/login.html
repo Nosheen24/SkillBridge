@@ -1,67 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
 <title>SkillBridge - Login</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/css/login.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+<style>
+  .forgot-link { display: block; text-align: right; margin-top: -8px; margin-bottom: 16px; font-size: 0.85rem; }
+  .error-msg {
+    background: #fdecea; color: #c62828;
+    padding: 12px 16px; border-radius: 8px;
+    margin-bottom: 16px; font-size: 0.9rem; display: none;
+  }
+</style>
 </head>
-
 <body>
-
 <div class="navbar">
-<h1>SkillBridge</h1>
-
-<div>
-<a href="#">Home</a>
-<a href="#">About</a>
-<a href="/register">Register</a>
+  <h1>SkillBridge</h1>
+  <div>
+    <a href="#">Home</a>
+    <a href="#">About</a>
+    <a href="/register">Register</a>
+  </div>
 </div>
-</div>
-
 <div class="main">
+  <div class="container">
+    <h2>Welcome Back</h2>
+    <p class="tagline">Login to continue collaborating</p>
 
-<div class="container">
+    <div class="error-msg" id="loginError"></div>
 
-<h2>Welcome Back</h2>
-<p class="tagline">Login to continue collaborating</p>
+    <form id="loginForm">
+      <label>Email</label>
+      <div class="input-group">
+        <i class="fa-solid fa-envelope"></i>
+        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+      </div>
+      <label>Password</label>
+      <div class="input-group">
+        <i class="fa-solid fa-lock"></i>
+        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+      </div>
+      <a href="/forgot_password" class="forgot-link">Forgot password?</a>
+      <button type="submit" id="loginBtn">Login</button>
+    </form>
 
-<form method="post" action="/auth/login">
-
-<label>Email</label>
-<div class="input-group">
-<i class="fa-solid fa-envelope"></i>
-<input type="email" name="email" placeholder="Enter your email" required>
+    <div class="login">
+      Don't have an account? <a href="/register">Register</a>
+    </div>
+    <div class="about">
+      <strong>SkillBridge</strong><br>
+      A platform where students collaborate by exchanging skills,
+      completing micro-tasks, and building real experience together.
+    </div>
+  </div>
 </div>
 
-<label>Password</label>
-<div class="input-group">
-<i class="fa-solid fa-lock"></i>
-<input type="password" name="password" placeholder="Enter your password" required>
-</div>
+<script>
+  const API = 'http://127.0.0.1:8000';
 
-<button type="submit">Login</button>
+  document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const btn = document.getElementById('loginBtn');
+    const errDiv = document.getElementById('loginError');
 
-</form>
+    btn.textContent = 'Logging in...';
+    btn.disabled = true;
+    errDiv.style.display = 'none';
 
-<div class="login">
-Don't have an account? <a href="/register">Register</a>
-</div>
-
-<div class="about">
-<strong>SkillBridge</strong><br>
-A platform where students collaborate by exchanging skills,
-completing micro-tasks, and building real experience together.
-</div>
-
-</div>
-
-</div>
-
+    try {
+      const res = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('user_id', data.user?.id || '');
+        localStorage.setItem('user_name', data.user?.email || '');
+        window.location.href = '/browse';
+      } else {
+        errDiv.textContent = data.detail || 'Invalid email or password.';
+        errDiv.style.display = 'block';
+      }
+    } catch (err) {
+      errDiv.textContent = 'Cannot connect to server.';
+      errDiv.style.display = 'block';
+    }
+    btn.textContent = 'Login';
+    btn.disabled = false;
+  });
+</script>
 </body>
-
 </html>
