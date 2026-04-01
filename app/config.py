@@ -1,22 +1,22 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+import os
 from dotenv import load_dotenv
- 
+
 load_dotenv()
- 
+
 class Settings(BaseSettings):
-    supabase_url: str = ""
-    supabase_key: str = ""
-    supabase_service_key: str = ""
-    app_name: str = "SkillBridge API"
-    app_version: str = "1.0.0"
+    supabase_url: str = os.getenv("SUPABASE_URL", "")
+    supabase_key: str = os.getenv("SUPABASE_KEY", "")
+    supabase_service_key: str = os.getenv("SUPABASE_SERVICE_KEY", "")
+    app_name: str = os.getenv("APP_NAME", "SkillBridge API")
+    app_version: str = os.getenv("APP_VERSION", "1.0.0")
     debug: bool = True
-    allowed_origins: str = "http://localhost:3000,http://localhost:8000"
- 
+
     class Config:
         env_file = ".env"
         extra = "ignore"
- 
+
 @lru_cache()
 def get_settings():
     return Settings()
