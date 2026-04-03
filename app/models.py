@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
-
+from pydantic import BaseModel, Field
 
 # ===== AUTH MODELS =====
 
@@ -95,3 +95,16 @@ class TaskListResponse(BaseModel):
 
 class SuccessResponse(BaseModel):
     message: str
+    
+# # Sprint 3 changes(Skil-17)
+
+class ApplicantDecisionRequest(BaseModel):
+    decision: str = Field(..., pattern="^(accepted|rejected)$")
+
+
+class ApplicantDecisionResponse(BaseModel):
+    message: str
+    application_id: str
+    task_id: str
+    applicant_id: str
+    status: str
