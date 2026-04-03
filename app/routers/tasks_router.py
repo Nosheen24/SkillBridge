@@ -1,24 +1,34 @@
 
 
 from fastapi import APIRouter, HTTPException, status, Depends, Query
-from app.models import (
+from app.models import (        # Sprint 3 changes(Skil-17)
     TaskCreateRequest,
     TaskResponse,
     TaskListResponse,
     TaskCreatorInfo,
-    SuccessResponse
+    SuccessResponse,
+    ApplicantDecisionRequest,
+    ApplicantDecisionResponse
 )
 from app.database import supabase
 from app.auth import get_current_user
 from datetime import datetime
 from typing import Optional, List
 from decimal import Decimal
+from supabase import create_client        # Sprint 3 changes(Skil-17)
+from app.config import get_settings
 
 router = APIRouter(
     prefix="/tasks",
     tags=["Tasks"]
 )
 
+# Sprint 3 changes(Skil-17)
+settings = get_settings()
+service_client = create_client(
+    settings.supabase_url,
+    settings.supabase_service_key
+)
 
 def parse_task_with_creator(task_data: dict) -> TaskResponse:
    
@@ -299,7 +309,8 @@ async def view_applicants(
         if not task.data:
             raise HTTPException(status_code=404, detail="Task not found")
 
-        if task.data[0]["creator_id"] != current_user.id:
+        # if task.data[0]["creator_id"] != current_user["id"]:
+        if task.data[0]["creator_id"] != current_user.id:   
             raise HTTPException(status_code=403, detail="Only task creator can view applicants")
 
         # Get all applications for this task
@@ -317,6 +328,105 @@ async def view_applicants(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to fetch applicants: {str(e)}")
 
+# Sprint 3 Skil-17 changes
+
+@router.patch(
+    "/{task_id}/applications/{application_id}",
+    response_model=ApplicantDecisionResponse,
+    status_code=status.HTTP_200_OK,
+    summary="SKIL-17: Accept/Reject Applicant",
+    description="Accept or reject an applicant for a task (only task creator can do this)"
+)
+async def decide_applicant(
+    task_id: str,
+    application_id: str,
+    decision_data: ApplicantDecisionRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        # 1. Check task exists
+        task_response = supabase.table("tasks").select("*").eq("id", task_id).execute()
+
+        if not task_response.data:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+        task = task_response.data[0]
+
+        # 2. Only creator allowed
+        if task["creator_id"] != current_user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="Only task creator can accept or reject applicants"
+            )
+
+        # 3. Check application exists
+        application_response = supabase.table("task_applications").select("*")\
+            .eq("id", application_id)\
+            .eq("task_id", task_id)\
+            .execute()
+
+        if not application_response.data:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        application = application_response.data[0]
+
+        # 4. Prevent duplicate decision
+        if application["status"] != "pending":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Application already {application['status']}"
+            )
+
+        # 5. Update selected application
+        updated_application = service_client.table("task_applications").update(
+            {"status": decision_data.decision}
+        ).eq("id", application_id).execute()
+
+        if not updated_application.data:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to update application status"
+            )
+
+        # 6. If accepted → assign task + reject others
+        if decision_data.decision == "accepted":
+
+            # Assign task
+            task_update = service_client.table("tasks").update({
+                "assigned_to": application["applicant_id"],
+                "status": "in_progress"
+            }).eq("id", task_id).execute()
+
+            if not task_update.data:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to update task"
+                )
+
+            # Reject all others
+            service_client.table("task_applications").update(
+                {"status": "rejected"}
+            ).eq("task_id", task_id)\
+             .eq("status", "pending")\
+             .neq("id", application_id)\
+             .execute()
+
+        return ApplicantDecisionResponse(
+            message=f"Applicant {decision_data.decision} successfully",
+            application_id=updated_application.data[0]["id"],
+            task_id=updated_application.data[0]["task_id"],
+            applicant_id=updated_application.data[0]["applicant_id"],
+            status=updated_application.data[0]["status"]
+        )
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to process decision: {str(e)}"
+        )
 
 @router.patch(
     "/{task_id}/complete",
@@ -334,6 +444,7 @@ async def mark_task_complete(
         if not task.data:
             raise HTTPException(status_code=404, detail="Task not found")
 
+        # if task.data[0]["creator_id"] != current_user["id"]:
         if task.data[0]["creator_id"] != current_user.id:
             raise HTTPException(status_code=403, detail="Only task creator can mark task as complete")
 
