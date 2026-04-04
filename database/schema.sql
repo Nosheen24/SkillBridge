@@ -216,3 +216,27 @@ CREATE POLICY "Authenticated users can upload task attachments"
         bucket_id = 'task-attachments' AND
         auth.role() = 'authenticated'
     );
+
+-- sprint 3 addition 
+alter table public.profiles
+add column if not exists experience text;
+alter table public.profiles
+add column if not exists portfolio_url text;
+alter table public.profiles
+add column if not exists portfolio_filename text;
+alter table public.profiles
+add column if not exists portfolio_type text;
+alter table public.profiles
+add column if not exists portfolio_link text;
+insert into storage.buckets (id, name, public)
+values ('portfolios', 'portfolios', true)
+on conflict (id) do nothing;
+create policy "Portfolio files are publicly accessible"
+on storage.objects for select
+using (bucket_id = 'portfolios');
+create policy "Authenticated users can upload portfolio files"
+on storage.objects for insert
+with check (
+    bucket_id = 'portfolios'
+and auth.role() = 'authenticated'
+);

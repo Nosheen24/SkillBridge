@@ -108,3 +108,38 @@ class ApplicantDecisionResponse(BaseModel):
     task_id: str
     applicant_id: str
     status: str
+    
+from typing import List, Optional
+from datetime import datetime
+from pydantic import BaseModel, Field, field_validator
+
+# sprint 3 Skil-18 changes
+class SkillProfileCreateRequest(BaseModel):
+    skills: List[str] = Field(..., min_length=1)
+    experience: str = Field(..., min_length=1, max_length=2000)
+    bio: str = Field(..., min_length=1, max_length=500)
+
+    @field_validator("skills")
+    @classmethod
+    def validate_skills(cls, v):
+        cleaned = [skill.strip() for skill in v if skill and skill.strip()]
+        if not cleaned:
+            raise ValueError("At least one skill is required")
+        return cleaned
+
+
+class SkillProfileResponse(BaseModel):
+    id: str
+    email: str
+    full_name: Optional[str]
+    username: Optional[str]
+    bio: Optional[str]
+    skills: Optional[List[str]]
+    experience: Optional[str]
+    student_id: Optional[str]
+    university: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
