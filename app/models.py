@@ -143,3 +143,17 @@ class SkillProfileResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        
+# Skil-19
+class SkillProfileUpdateRequest(BaseModel):
+    skills: List[str] = Field(..., min_length=1)
+    experience: str = Field(..., min_length=1, max_length=2000)
+    bio: str = Field(..., min_length=1, max_length=500)
+
+    @field_validator("skills")
+    @classmethod
+    def validate_skills(cls, v):
+        cleaned = [skill.strip() for skill in v if skill and skill.strip()]
+        if not cleaned:
+            raise ValueError("At least one skill is required")
+        return cleaned
