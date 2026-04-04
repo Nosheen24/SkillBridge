@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
-from app.routers import auth_router, tasks_router
+from app.routers import auth_router, tasks_router, profile_router
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -33,6 +33,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth_router.router)
 app.include_router(tasks_router.router)
+app.include_router(profile_router.router)
 
 
 @app.get("/", tags=["Root"])
