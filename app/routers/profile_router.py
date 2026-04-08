@@ -1,11 +1,19 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from datetime import datetime
 
+from fastapi import UploadFile, File      # Skil-20 changes
+from supabase import create_client
+from app.config import get_settings
+import uuid
+import mimetypes
+
 from app.models import (
     SkillProfileCreateRequest,
     SkillProfileUpdateRequest,
-    SkillProfileResponse
+    SkillProfileResponse,
+    PortfolioLinkRequest,
 )
+
 from app.database import supabase
 from app.auth import get_current_user
 
@@ -14,6 +22,15 @@ router = APIRouter(
     tags=["Profile"]
 )
 
+settings = get_settings()                   # Skil-20 changes
+service_client = create_client(
+    settings.supabase_url,
+    settings.supabase_service_key
+)
+
+ALLOWED_FILE_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".webp"}
+ALLOWED_MIME_PREFIXES = ("image/",)
+PORTFOLIO_BUCKET = "portfolios"
 
 def parse_profile(profile_data: dict) -> SkillProfileResponse:
     return SkillProfileResponse(
@@ -26,6 +43,10 @@ def parse_profile(profile_data: dict) -> SkillProfileResponse:
         experience=profile_data.get("experience"),
         student_id=profile_data.get("student_id"),
         university=profile_data.get("university"),
+        portfolio_url=profile_data.get("portfolio_url"),
+        portfolio_filename=profile_data.get("portfolio_filename"),
+        portfolio_type=profile_data.get("portfolio_type"),
+        portfolio_link=profile_data.get("portfolio_link"),
         created_at=datetime.fromisoformat(profile_data["created_at"].replace("Z", "+00:00")),
         updated_at=datetime.fromisoformat(profile_data["updated_at"].replace("Z", "+00:00"))
     )
@@ -152,3 +173,73 @@ async def edit_skill_profile(
             status_code=400,
             detail=f"Failed to update profile: {str(e)}"
         )
+        
+# Skil-20 changes
+@router.post(
+    "/me/portfolio/upload",
+    response_model=SkillProfileResponse,
+    summary="SKIL-20: Upload Portfolio File"
+)
+async def upload_portfolio_file(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="No file selected")
+
+        filename_lower = file.filename.lower()
+        extension = "." + filename_lower.rsplit(".", 1)[-1] if "." in filename_lower else ""
+
+        content_type = file.content_type or mimetypes.guess_type(file.filename)[0] or ""
+
+        if extension not in ALLOWED_FILE_EXTENSIONS and not content_type.startswith(ALLOWED_MIME_PREFIXES):
+            raise HTTPException(status_code=400, detail="Invalid file type")
+
+        file_bytes = await file.read()
+
+        unique_filename = f"{current_user.id}/{uuid.uuid4()}_{file.filename}"
+
+        service_client.storage.from_(PORTFOLIO_BUCKET).upload(
+            unique_filename,
+            file_bytes,
+            {"content-type": content_type}
+        )
+
+        public_url = service_client.storage.from_(PORTFOLIO_BUCKET).get_public_url(unique_filename)
+
+        portfolio_type = "image" if content_type.startswith("image/") else "pdf"
+
+        updated = supabase.table("profiles").update({
+            "portfolio_url": public_url,
+            "portfolio_filename": file.filename,
+            "portfolio_type": portfolio_type,
+            "portfolio_link": None
+        }).eq("id", current_user.id).execute()
+
+        return parse_profile(updated.data[0])
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+@router.post(
+    "/me/portfolio/link",
+    response_model=SkillProfileResponse,
+    summary="SKIL-20: Save Portfolio Link"
+)
+async def save_portfolio_link(
+    portfolio_data: PortfolioLinkRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        updated = supabase.table("profiles").update({
+            "portfolio_url": None,
+            "portfolio_filename": None,
+            "portfolio_type": "link",
+            "portfolio_link": portfolio_data.portfolio_link
+        }).eq("id", current_user.id).execute()
+
+        return parse_profile(updated.data[0])
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

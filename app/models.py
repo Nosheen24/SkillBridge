@@ -138,6 +138,10 @@ class SkillProfileResponse(BaseModel):
     experience: Optional[str]
     student_id: Optional[str]
     university: Optional[str]
+    portfolio_url: Optional[str] = None          # Skil-20 updates 
+    portfolio_filename: Optional[str] = None
+    portfolio_type: Optional[str] = None
+    portfolio_link: Optional[str] = None         # Skil-20 updates 
     created_at: datetime
     updated_at: datetime
 
@@ -157,3 +161,7 @@ class SkillProfileUpdateRequest(BaseModel):
         if not cleaned:
             raise ValueError("At least one skill is required")
         return cleaned
+   
+# Skil-20 updates 
+class PortfolioLinkRequest(BaseModel):
+    portfolio_link: str = Field(..., min_length=1, max_length=1000)
