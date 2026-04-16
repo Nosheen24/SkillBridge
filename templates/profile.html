@@ -76,6 +76,8 @@
   .msg.success { background:#e0f7e9; color:#2e7d32; }
   .msg.error { background:#fdecea; color:#c62828; }
 
+  @media(max-width:600px){ .edit-grid{ grid-template-columns:1fr !important; } }
+
   /* Existing skills display */
   .current-skills { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
   .current-skill-tag { background:#ede9ff; color:#6c63ff; padding:5px 12px; border-radius:20px; font-size:13px; }
@@ -113,6 +115,34 @@
       <p class="email" id="headerEmail"></p>
       <p id="headerUniversity" style="color:#888;font-size:0.82rem;margin-top:2px"></p>
     </div>
+  </div>
+
+  <!-- Edit Profile Card -->
+  <div class="card">
+    <div class="card-title"><i class="fa-solid fa-pen-to-square"></i> Edit Profile</div>
+
+    <div class="edit-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="editFullName" placeholder="Your full name">
+      </div>
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="editUsername" placeholder="@username">
+      </div>
+      <div class="field">
+        <label>University</label>
+        <input type="text" id="editUniversity" placeholder="Your university">
+      </div>
+      <div class="field">
+        <label>Student ID</label>
+        <input type="text" id="editStudentId" placeholder="Student ID">
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="editBtn" onclick="editProfile()">
+      <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Save Changes
+    </button>
   </div>
 
   <!-- Skill Profile Form -->
@@ -274,6 +304,12 @@ async function loadProfile() {
     document.getElementById('headerEmail').textContent = p.email;
     document.getElementById('headerUniversity').textContent = p.university || '';
 
+    /* pre-fill edit profile fields */
+    document.getElementById('editFullName').value  = p.full_name   || '';
+    document.getElementById('editUsername').value  = p.username    || '';
+    document.getElementById('editUniversity').value = p.university || '';
+    document.getElementById('editStudentId').value = p.student_id  || '';
+
     /* form */
     if (p.skills && p.skills.length) {
       skills = [...p.skills];
@@ -297,6 +333,43 @@ function showPortfolioPreview(html) {
   const el = document.getElementById('portfolioPreview');
   document.getElementById('portfolioPreviewText').innerHTML = html;
   el.style.display = 'flex';
+}
+
+/* ── edit profile (personal info) ── */
+async function editProfile() {
+  const btn = document.getElementById('editBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  const experience = document.getElementById('experience').value.trim();
+  const bio = document.getElementById('bio').value.trim();
+
+  const payload = {
+    full_name:  document.getElementById('editFullName').value.trim(),
+    username:   document.getElementById('editUsername').value.trim(),
+    university: document.getElementById('editUniversity').value.trim(),
+    student_id: document.getElementById('editStudentId').value.trim(),
+    skills:     skills.length ? skills : ['—'],
+    experience: experience || '—',
+    bio:        bio || '—',
+  };
+
+  try {
+    const res = await authFetch(`${API}/profile/me`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showMsg('Profile updated successfully!', 'success');
+      document.getElementById('headerName').textContent = data.full_name || data.username || 'No name set';
+      document.getElementById('headerUsername').textContent = data.username ? `@${data.username}` : '';
+      document.getElementById('headerUniversity').textContent = data.university || '';
+    } else {
+      showMsg(data.detail || 'Failed to update', 'error');
+    }
+  } catch(e) { showMsg('Error updating profile', 'error'); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Save Changes'; }
 }
 
 /* ── save skill profile ── */
