@@ -9,7 +9,9 @@ from app.models import (
     UserProfile,
     ErrorResponse,
     PasswordResetRequest,
-    SetNewPasswordRequest
+    SetNewPasswordRequest,
+    RefreshTokenRequest,
+    RefreshTokenResponse,
 )
 from app.database import supabase
 from app.auth import get_current_user
@@ -62,7 +64,7 @@ async def login_user(credentials: UserLoginRequest):
             raise HTTPException(status_code=404, detail="User profile not found")
         profile_data = profile_response.data[0]
         user_profile = UserProfile(id=profile_data["id"], email=profile_data["email"], full_name=profile_data.get("full_name"), username=profile_data.get("username"), bio=profile_data.get("bio"), skills=profile_data.get("skills", []), student_id=profile_data.get("student_id"), university=profile_data.get("university"), created_at=datetime.fromisoformat(profile_data["created_at"].replace("Z", "+00:00")), updated_at=datetime.fromisoformat(profile_data["updated_at"].replace("Z", "+00:00")))
-        return UserLoginResponse(access_token=auth_response.session.access_token, token_type="bearer", user=user_profile, expires_in=auth_response.session.expires_in or 3600)
+        return UserLoginResponse(access_token=auth_response.session.access_token, refresh_token=auth_response.session.refresh_token, token_type="bearer", user=user_profile, expires_in=auth_response.session.expires_in or 3600)
     except HTTPException:
         raise
     except Exception as e:
@@ -70,6 +72,22 @@ async def login_user(credentials: UserLoginRequest):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Login failed: {str(e)}"
         )
+
+@router.post("/refresh", response_model=RefreshTokenResponse, status_code=200, summary="Refresh access token")
+async def refresh_token(request: RefreshTokenRequest):
+    try:
+        response = supabase.auth.refresh_session(request.refresh_token)
+        if not response.session:
+            raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+        return RefreshTokenResponse(
+            access_token=response.session.access_token,
+            refresh_token=response.session.refresh_token,
+            expires_in=response.session.expires_in or 3600
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Token refresh failed: {str(e)}")
 
 @router.post("/logout", status_code=200, summary="SKIL-9: User Logout")
 async def logout_user(current_user: dict = Depends(get_current_user)):
