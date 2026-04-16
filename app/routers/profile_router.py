@@ -152,12 +152,22 @@ async def edit_skill_profile(
         if not existing_profile.data:
             raise HTTPException(status_code=404, detail="Profile not found")
 
-        # Update profile
-        updated = service_client.table("profiles").update({
+        # Build update payload — only include fields that were provided
+        payload = {
             "skills": profile_data.skills,
             "experience": profile_data.experience,
-            "bio": profile_data.bio
-        }).eq("id", current_user.id).execute()
+            "bio": profile_data.bio,
+        }
+        if profile_data.full_name is not None:
+            payload["full_name"] = profile_data.full_name
+        if profile_data.username is not None:
+            payload["username"] = profile_data.username
+        if profile_data.university is not None:
+            payload["university"] = profile_data.university
+        if profile_data.student_id is not None:
+            payload["student_id"] = profile_data.student_id
+
+        updated = service_client.table("profiles").update(payload).eq("id", current_user.id).execute()
 
         if not updated.data:
             raise HTTPException(

@@ -160,6 +160,10 @@ class SkillProfileResponse(BaseModel):
         
 # Skil-19
 class SkillProfileUpdateRequest(BaseModel):
+    full_name: Optional[str] = Field(None, max_length=100)
+    username: Optional[str] = Field(None, max_length=50)
+    university: Optional[str] = Field(None, max_length=200)
+    student_id: Optional[str] = Field(None, max_length=50)
     skills: List[str] = Field(..., min_length=1)
     experience: str = Field(..., min_length=1, max_length=2000)
     bio: str = Field(..., min_length=1, max_length=500)
