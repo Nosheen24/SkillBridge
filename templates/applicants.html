@@ -15,6 +15,15 @@
   .container { max-width:800px; margin:40px auto; background:white; border-radius:16px; padding:32px; }
   .applicant-card { border:1px solid #eee; border-radius:12px; padding:16px; margin:12px 0; }
   .back-btn { background:#6c63ff; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-family:Poppins; margin-bottom:20px; }
+  .accept-btn { background:#28a745; color:white; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-family:Poppins; margin-right:8px; }
+  .reject-btn { background:#dc3545; color:white; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-family:Poppins; }
+  .accept-btn:disabled, .reject-btn:disabled { background:#aaa; cursor:not-allowed; }
+  .status-accepted { color:#28a745; font-weight:600; }
+  .status-rejected { color:#dc3545; font-weight:600; }
+  .status-pending { color:#f59e0b; font-weight:600; }
+  .msg { padding:10px 16px; border-radius:8px; margin:8px 0; display:none; }
+  .success { background:#e0f7e9; color:#2e7d32; }
+  .error { background:#fdecea; color:#c62828; }
 </style>
 </head>
 <body>
@@ -28,6 +37,7 @@
 <div class="container">
   <button class="back-btn" onclick="window.location.href='/browse'">← Back to Tasks</button>
   <h2>Task Applicants</h2>
+  <div id="msg" class="msg"></div>
   <div id="applicantsContainer">Loading...</div>
 </div>
 <script>
@@ -38,6 +48,31 @@ const taskId = new URLSearchParams(window.location.search).get('task_id');
 function logout() {
   localStorage.clear();
   window.location.href = '/login';
+}
+
+function showMsg(text, type) {
+  const m = document.getElementById('msg');
+  m.textContent = text;
+  m.className = 'msg ' + type;
+  m.style.display = 'block';
+  setTimeout(() => m.style.display = 'none', 3000);
+}
+
+async function decide(applicationId, decision) {
+  try {
+    const res = await fetch(`${API}/tasks/${taskId}/applications/${applicationId}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showMsg(`Applicant ${decision} successfully!`, 'success');
+      loadApplicants();
+    } else {
+      showMsg(data.detail || 'Action failed', 'error');
+    }
+  } catch(e) { showMsg('Error processing decision', 'error'); }
 }
 
 async function loadApplicants() {
@@ -53,14 +88,21 @@ async function loadApplicants() {
     if (!data.applicants || data.applicants.length === 0) {
       container.innerHTML = '<p>No applicants yet.</p>'; return;
     }
-    container.innerHTML = `<p><strong>Total: ${data.total_applicants} applicants</strong></p>` +
+    container.innerHTML = `<p style="margin-bottom:12px"><strong>Total: ${data.total_applicants} applicants</strong></p>` +
       data.applicants.map(app => `
         <div class="applicant-card">
-          <h3>${app.profiles?.full_name || app.profiles?.username || 'Unknown'}</h3>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3>${app.profiles?.full_name || app.profiles?.username || 'Unknown'}</h3>
+            <span class="status-${app.status}">${app.status.charAt(0).toUpperCase() + app.status.slice(1)}</span>
+          </div>
           <p><strong>Email:</strong> ${app.profiles?.email || 'N/A'}</p>
           <p><strong>University:</strong> ${app.profiles?.university || 'N/A'}</p>
-          <p><strong>Message:</strong> ${app.message || 'No message'}</p>
-          <p><strong>Status:</strong> ${app.status}</p>
+          <p style="margin-bottom:12px"><strong>Message:</strong> ${app.message || 'No message'}</p>
+          ${app.status === 'pending' ? `
+          <div>
+            <button class="accept-btn" onclick="decide('${app.id}', 'accepted')">Accept</button>
+            <button class="reject-btn" onclick="decide('${app.id}', 'rejected')">Reject</button>
+          </div>` : ''}
         </div>
       `).join('');
   } catch(e) { document.getElementById('applicantsContainer').innerHTML = '<p>Error loading applicants.</p>'; }

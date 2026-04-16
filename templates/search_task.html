@@ -1,77 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
 <title>SkillBridge - Search Tasks</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/css/search_task.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+<style>
+  .results-section { max-width:900px; margin:30px auto; padding:0 20px; }
+  .results-title { color:white; font-size:18px; margin-bottom:16px; }
+  .tasks-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; }
+  .task-card { background:white; border-radius:12px; padding:20px; box-shadow:0 4px 16px rgba(0,0,0,0.15); color:#333; }
+  .task-card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+  .task-card h3 { font-size:16px; font-weight:600; color:#1a1a1a; flex:1; margin-right:8px; }
+  .status-badge { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:500; white-space:nowrap; }
+  .status-open { background:#e0f7e9; color:#2e7d32; }
+  .status-in_progress { background:#fff3e0; color:#e65100; }
+  .status-completed { background:#fce4ec; color:#c62828; }
+  .task-desc { font-size:13px; color:#555; margin-bottom:12px; line-height:1.5; }
+  .task-meta { display:flex; flex-wrap:wrap; gap:8px; font-size:12px; color:#666; margin-bottom:14px; }
+  .task-meta span { display:flex; align-items:center; gap:4px; }
+  .tag { background:#ede9ff; color:#6c63ff; padding:3px 9px; border-radius:20px; font-size:11px; }
+  .apply-btn { background:#6c63ff; color:white; border:none; padding:9px 18px; border-radius:8px; cursor:pointer; font-family:Poppins; font-size:13px; width:100%; }
+  .apply-btn:hover { background:#5a52e0; }
+  .apply-btn:disabled { background:#aaa; cursor:not-allowed; }
+  .no-results { text-align:center; color:rgba(255,255,255,0.85); padding:40px 0; font-size:15px; }
+  .msg { padding:10px 16px; border-radius:8px; margin:0 20px 16px; display:none; max-width:900px; margin-left:auto; margin-right:auto; }
+  .success { background:#e0f7e9; color:#2e7d32; }
+  .error { background:#fdecea; color:#c62828; }
+  .loading { text-align:center; color:rgba(255,255,255,0.85); padding:30px 0; }
+</style>
 </head>
-
 <body>
 
 <div class="navbar">
-<h1>SkillBridge</h1>
-
-<div>
-<a href="/post-task">Post Task</a>
-<a href="/search">Search Tasks</a>
-<a href="/login">Login</a>
-</div>
+  <h1>SkillBridge</h1>
+  <div>
+    <a href="/browse">Browse</a>
+    <a href="/search">Search Tasks</a>
+    <a href="/post-task">Post Task</a>
+  </div>
 </div>
 
 <div class="main">
+  <div class="container">
+    <h2>Find Micro Tasks</h2>
+    <p class="tagline">Search tasks posted by students</p>
 
-<div class="container">
+    <form id="searchForm" onsubmit="handleSearch(event)">
 
-<h2>Find Micro Tasks</h2>
-<p class="tagline">Search tasks posted by students</p>
+      <label>Keyword</label>
+      <div class="input-group">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="keyword" placeholder="Search by title or description">
+      </div>
 
-<form method="get" action="/tasks/search">
+      <label>Category</label>
+      <div class="input-group">
+        <i class="fa-solid fa-layer-group"></i>
+        <input type="text" id="category" placeholder="Example: Programming">
+      </div>
 
-<label>Keyword</label>
-<div class="input-group">
-<i class="fa-solid fa-magnifying-glass"></i>
-<input type="text" name="keyword" placeholder="Search by title or description">
+      <label>Minimum Budget</label>
+      <div class="input-group">
+        <i class="fa-solid fa-dollar-sign"></i>
+        <input type="number" step="0.01" id="min_budget" placeholder="Minimum budget">
+      </div>
+
+      <label>Maximum Budget</label>
+      <div class="input-group">
+        <i class="fa-solid fa-dollar-sign"></i>
+        <input type="number" step="0.01" id="max_budget" placeholder="Maximum budget">
+      </div>
+
+      <label>Status</label>
+      <div class="input-group">
+        <select id="status_filter">
+          <option value="open">Open</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+
+      <button type="submit"><i class="fa-solid fa-magnifying-glass" style="margin-right:8px"></i>Search Tasks</button>
+    </form>
+  </div>
 </div>
 
-<label>Category</label>
-<div class="input-group">
-<i class="fa-solid fa-layer-group"></i>
-<input type="text" name="category" placeholder="Example: Programming">
+<div id="msg" class="msg"></div>
+<div id="resultsSection" class="results-section" style="display:none">
+  <p class="results-title" id="resultsTitle"></p>
+  <div class="tasks-grid" id="tasksGrid"></div>
 </div>
 
-<label>Minimum Budget</label>
-<div class="input-group">
-<i class="fa-solid fa-dollar-sign"></i>
-<input type="number" step="0.01" name="min_budget" placeholder="Minimum budget">
-</div>
+<script>
+const API = 'http://127.0.0.1:8000';
+const token = localStorage.getItem('access_token');
+const userId = localStorage.getItem('user_id');
 
-<label>Maximum Budget</label>
-<div class="input-group">
-<i class="fa-solid fa-dollar-sign"></i>
-<input type="number" step="0.01" name="max_budget" placeholder="Maximum budget">
-</div>
+function showMsg(text, type) {
+  const m = document.getElementById('msg');
+  m.textContent = text;
+  m.className = 'msg ' + type;
+  m.style.display = 'block';
+  setTimeout(() => m.style.display = 'none', 3000);
+}
 
-<label>Status</label>
-<div class="input-group">
-<select name="status">
-<option value="open">Open</option>
-<option value="assigned">Assigned</option>
-<option value="completed">Completed</option>
-</select>
-</div>
+async function handleSearch(e) {
+  e.preventDefault();
 
-<button type="submit">Search Tasks</button>
+  const keyword   = document.getElementById('keyword').value.trim();
+  const category  = document.getElementById('category').value.trim();
+  const min_budget = document.getElementById('min_budget').value;
+  const max_budget = document.getElementById('max_budget').value;
+  const status    = document.getElementById('status_filter').value;
 
-</form>
+  const params = new URLSearchParams();
+  if (keyword)    params.set('keyword', keyword);
+  if (category)   params.set('category', category);
+  if (min_budget) params.set('min_budget', min_budget);
+  if (max_budget) params.set('max_budget', max_budget);
+  if (status)     params.set('status_filter', status);
 
-</div>
+  const section = document.getElementById('resultsSection');
+  const grid    = document.getElementById('tasksGrid');
+  const title   = document.getElementById('resultsTitle');
 
-</div>
+  section.style.display = 'block';
+  grid.innerHTML = '<p class="loading">Searching...</p>';
 
+  try {
+    const res  = await fetch(`${API}/tasks/search?${params}`);
+    const data = await res.json();
+
+    if (!res.ok) { showMsg(data.detail || 'Search failed', 'error'); grid.innerHTML = ''; return; }
+
+    const tasks = data.tasks || [];
+    title.textContent = `${data.total ?? tasks.length} result${tasks.length !== 1 ? 's' : ''} found`;
+
+    if (tasks.length === 0) {
+      grid.innerHTML = '<p class="no-results">No tasks match your search.</p>';
+      return;
+    }
+
+    grid.innerHTML = tasks.map(task => {
+      const tags = (task.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+      const canApply = token && task.status === 'open' && task.creator_id !== userId;
+      return `
+        <div class="task-card">
+          <div class="task-card-header">
+            <h3>${task.title}</h3>
+            <span class="status-badge status-${task.status}">${task.status.replace('_',' ')}</span>
+          </div>
+          <p class="task-desc">${task.description || 'No description'}</p>
+          <div class="task-meta">
+            <span><i class="fa-solid fa-wallet"></i> Rs. ${task.budget}</span>
+            <span><i class="fa-solid fa-user"></i> ${task.creator?.full_name || task.creator?.username || 'Unknown'}</span>
+            ${task.category ? `<span><i class="fa-solid fa-tag"></i> ${task.category}</span>` : ''}
+          </div>
+          ${tags ? `<div style="margin-bottom:12px">${tags}</div>` : ''}
+          ${canApply
+            ? `<button class="apply-btn" onclick="applyTask('${task.id}', this)">Apply</button>`
+            : task.status !== 'open' ? `<button class="apply-btn" disabled>${task.status.replace('_',' ')}</button>`
+            : !token ? `<button class="apply-btn" onclick="window.location.href='/login'">Login to Apply</button>`
+            : ''}
+        </div>`;
+    }).join('');
+
+  } catch(e) {
+    showMsg('Error connecting to server', 'error');
+    grid.innerHTML = '';
+  }
+}
+
+async function applyTask(taskId, btn) {
+  if (!token) return window.location.href = '/login';
+  const msg = prompt('Enter your message/bid:') || '';
+  btn.disabled = true;
+  btn.textContent = 'Applying...';
+  try {
+    const res = await fetch(`${API}/tasks/${taskId}/apply?message=${encodeURIComponent(msg)}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showMsg('Applied successfully!', 'success');
+      btn.textContent = 'Applied';
+    } else {
+      showMsg(data.detail || 'Failed to apply', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Apply';
+    }
+  } catch(e) {
+    showMsg('Error applying', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Apply';
+  }
+}
+
+// Auto-search if URL has query params (e.g. navigated from another page)
+(function() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.toString()) {
+    if (p.get('keyword'))    document.getElementById('keyword').value = p.get('keyword');
+    if (p.get('category'))   document.getElementById('category').value = p.get('category');
+    if (p.get('min_budget')) document.getElementById('min_budget').value = p.get('min_budget');
+    if (p.get('max_budget')) document.getElementById('max_budget').value = p.get('max_budget');
+    if (p.get('status_filter')) document.getElementById('status_filter').value = p.get('status_filter');
+    document.getElementById('searchForm').dispatchEvent(new Event('submit'));
+  }
+})();
+</script>
 </body>
 </html>

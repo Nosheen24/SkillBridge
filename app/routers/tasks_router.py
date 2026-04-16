@@ -15,19 +15,33 @@ from app.auth import get_current_user
 from datetime import datetime
 from typing import Optional, List
 from decimal import Decimal
-from supabase import create_client        # Sprint 3 changes(Skil-17)
 from app.config import get_settings
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from supabase import create_client
+
+_security = HTTPBearer()
+
+def _authed_client(token: str):
+    """Create a Supabase client with the user's JWT so RLS read policies are satisfied."""
+    s = get_settings()
+    client = create_client(s.supabase_url, s.supabase_key)
+    client.postgrest.auth(token)
+    return client
+
+def _service_client():
+    """Create a Supabase client with the service_role key to bypass RLS for writes."""
+    s = get_settings()
+    if not s.supabase_service_key or s.supabase_service_key == "your_service_role_key_here":
+        raise HTTPException(
+            status_code=500,
+            detail="SUPABASE_SERVICE_KEY is not configured. Add your service_role key to .env."
+        )
+    client = create_client(s.supabase_url, s.supabase_service_key)
+    return client
 
 router = APIRouter(
     prefix="/tasks",
     tags=["Tasks"]
-)
-
-# Sprint 3 changes(Skil-17)
-settings = get_settings()
-service_client = create_client(
-    settings.supabase_url,
-    settings.supabase_service_key
 )
 
 def parse_task_with_creator(task_data: dict) -> TaskResponse:
@@ -301,20 +315,22 @@ async def apply_for_task(
 )
 async def view_applicants(
     task_id: str,
+    credentials: HTTPAuthorizationCredentials = Depends(_security),
     current_user: dict = Depends(get_current_user)
 ):
     try:
+        db = _authed_client(credentials.credentials)
+
         # Check task exists and user is the creator
-        task = supabase.table("tasks").select("*").eq("id", task_id).execute()
+        task = db.table("tasks").select("*").eq("id", task_id).execute()
         if not task.data:
             raise HTTPException(status_code=404, detail="Task not found")
 
-        # if task.data[0]["creator_id"] != current_user["id"]:
-        if task.data[0]["creator_id"] != current_user.id:   
+        if task.data[0]["creator_id"] != current_user.id:
             raise HTTPException(status_code=403, detail="Only task creator can view applicants")
 
         # Get all applications for this task
-        applications = supabase.table("task_applications").select(
+        applications = db.table("task_applications").select(
             "*, profiles!task_applications_applicant_id_fkey(*)"
         ).eq("task_id", task_id).execute()
 
@@ -341,11 +357,15 @@ async def decide_applicant(
     task_id: str,
     application_id: str,
     decision_data: ApplicantDecisionRequest,
+    credentials: HTTPAuthorizationCredentials = Depends(_security),
     current_user: dict = Depends(get_current_user)
 ):
     try:
+        read_db = _authed_client(credentials.credentials)
+        write_db = _service_client()
+
         # 1. Check task exists
-        task_response = supabase.table("tasks").select("*").eq("id", task_id).execute()
+        task_response = read_db.table("tasks").select("*").eq("id", task_id).execute()
 
         if not task_response.data:
             raise HTTPException(status_code=404, detail="Task not found")
@@ -360,7 +380,7 @@ async def decide_applicant(
             )
 
         # 3. Check application exists
-        application_response = supabase.table("task_applications").select("*")\
+        application_response = read_db.table("task_applications").select("*")\
             .eq("id", application_id)\
             .eq("task_id", task_id)\
             .execute()
@@ -377,8 +397,8 @@ async def decide_applicant(
                 detail=f"Application already {application['status']}"
             )
 
-        # 5. Update selected application
-        updated_application = service_client.table("task_applications").update(
+        # 5. Update selected application (service_role bypasses RLS for cross-user write)
+        updated_application = write_db.table("task_applications").update(
             {"status": decision_data.decision}
         ).eq("id", application_id).execute()
 
@@ -392,7 +412,7 @@ async def decide_applicant(
         if decision_data.decision == "accepted":
 
             # Assign task
-            task_update = service_client.table("tasks").update({
+            task_update = write_db.table("tasks").update({
                 "assigned_to": application["applicant_id"],
                 "status": "in_progress"
             }).eq("id", task_id).execute()
@@ -404,7 +424,7 @@ async def decide_applicant(
                 )
 
             # Reject all others
-            service_client.table("task_applications").update(
+            write_db.table("task_applications").update(
                 {"status": "rejected"}
             ).eq("task_id", task_id)\
              .eq("status", "pending")\
