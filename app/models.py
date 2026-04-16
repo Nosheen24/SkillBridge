@@ -39,8 +39,17 @@ class UserLoginRequest(BaseModel):
 
 class UserLoginResponse(BaseModel):
     access_token: str
+    refresh_token: Optional[str] = None
     token_type: str
     user: UserProfile
+    expires_in: int
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+class RefreshTokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
     expires_in: int
 
 class PasswordResetRequest(BaseModel):
@@ -138,10 +147,11 @@ class SkillProfileResponse(BaseModel):
     experience: Optional[str]
     student_id: Optional[str]
     university: Optional[str]
-    portfolio_url: Optional[str] = None          # Skil-20 updates 
+    avatar_url: Optional[str] = None
+    portfolio_url: Optional[str] = None
     portfolio_filename: Optional[str] = None
     portfolio_type: Optional[str] = None
-    portfolio_link: Optional[str] = None         # Skil-20 updates 
+    portfolio_link: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

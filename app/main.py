@@ -95,6 +95,10 @@ def task_detail_page(request: Request):
 @app.get("/applicants")
 def applicants_page(request: Request):
     return templates.TemplateResponse(request, "applicants.html")
+
+@app.get("/profile")
+def profile_page(request: Request):
+    return templates.TemplateResponse(request, "profile.html")
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(

@@ -25,6 +25,7 @@
   .success { background:#e0f7e9; color:#2e7d32; }
   .error { background:#fdecea; color:#c62828; }
 </style>
+<script src="/static/js/auth.js"></script>
 </head>
 <body>
 <div class="navbar">
@@ -33,6 +34,7 @@
     <a href="/browse">Browse</a>
     <a href="/search">Search</a>
     <a href="/post-task">Post Task</a>
+    <a href="/profile">My Profile</a>
     <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 </div>
@@ -44,8 +46,6 @@
 </div>
 
 <script>
-const API = 'http://127.0.0.1:8000';
-const token = localStorage.getItem('access_token');
 const userId = localStorage.getItem('user_id');
 
 function showMsg(text, type) {
@@ -58,9 +58,9 @@ function showMsg(text, type) {
 
 async function logout() {
   try {
-    await fetch(`${API}/auth/logout`, {
+    await authFetch(`${API}/auth/logout`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { 'Authorization': `Bearer ${getToken()}` }
     });
   } catch(e) {}
   localStorage.clear();
@@ -68,12 +68,12 @@ async function logout() {
 }
 
 async function applyTask(taskId) {
-  if (!token) return window.location.href = '/login';
+  if (!getToken()) return window.location.href = '/login';
   const msg = prompt('Enter your message/bid:') || '';
   try {
-    const res = await fetch(`${API}/tasks/${taskId}/apply?message=${encodeURIComponent(msg)}`, {
+    const res = await authFetch(`${API}/tasks/${taskId}/apply?message=${encodeURIComponent(msg)}`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { 'Authorization': `Bearer ${getToken()}` }
     });
     const data = await res.json();
     if (res.ok) showMsg('Applied successfully!', 'success');
@@ -82,12 +82,12 @@ async function applyTask(taskId) {
 }
 
 async function markComplete(taskId) {
-  if (!token) return window.location.href = '/login';
+  if (!getToken()) return window.location.href = '/login';
   if (!confirm('Mark this task as complete?')) return;
   try {
-    const res = await fetch(`${API}/tasks/${taskId}/complete`, {
+    const res = await authFetch(`${API}/tasks/${taskId}/complete`, {
       method: 'PATCH',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { 'Authorization': `Bearer ${getToken()}` }
     });
     const data = await res.json();
     if (res.ok) { showMsg('Task marked complete!', 'success'); loadTasks(); }
@@ -96,13 +96,13 @@ async function markComplete(taskId) {
 }
 
 async function viewApplicants(taskId) {
-  if (!token) return window.location.href = '/login';
+  if (!getToken()) return window.location.href = '/login';
   window.location.href = `/applicants?task_id=${taskId}`;
 }
 
 async function loadTasks() {
   try {
-    const res = await fetch(`${API}/tasks/`);
+    const res = await authFetch(`${API}/tasks/`);
     const data = await res.json();
     const container = document.getElementById('tasksContainer');
     if (!data.tasks || data.tasks.length === 0) {

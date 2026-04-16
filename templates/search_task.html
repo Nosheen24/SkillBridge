@@ -30,6 +30,7 @@
   .error { background:#fdecea; color:#c62828; }
   .loading { text-align:center; color:rgba(255,255,255,0.85); padding:30px 0; }
 </style>
+<script src="/static/js/auth.js"></script>
 </head>
 <body>
 
@@ -39,6 +40,7 @@
     <a href="/browse">Browse</a>
     <a href="/search">Search Tasks</a>
     <a href="/post-task">Post Task</a>
+    <a href="/profile">My Profile</a>
   </div>
 </div>
 
@@ -94,8 +96,6 @@
 </div>
 
 <script>
-const API = 'http://127.0.0.1:8000';
-const token = localStorage.getItem('access_token');
 const userId = localStorage.getItem('user_id');
 
 function showMsg(text, type) {
@@ -130,7 +130,7 @@ async function handleSearch(e) {
   grid.innerHTML = '<p class="loading">Searching...</p>';
 
   try {
-    const res  = await fetch(`${API}/tasks/search?${params}`);
+    const res  = await authFetch(`${API}/tasks/search?${params}`);
     const data = await res.json();
 
     if (!res.ok) { showMsg(data.detail || 'Search failed', 'error'); grid.innerHTML = ''; return; }
@@ -145,7 +145,7 @@ async function handleSearch(e) {
 
     grid.innerHTML = tasks.map(task => {
       const tags = (task.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
-      const canApply = token && task.status === 'open' && task.creator_id !== userId;
+      const canApply = getToken() && task.status === 'open' && task.creator_id !== userId;
       return `
         <div class="task-card">
           <div class="task-card-header">
@@ -174,14 +174,14 @@ async function handleSearch(e) {
 }
 
 async function applyTask(taskId, btn) {
-  if (!token) return window.location.href = '/login';
+  if (!getToken()) return window.location.href = '/login';
   const msg = prompt('Enter your message/bid:') || '';
   btn.disabled = true;
   btn.textContent = 'Applying...';
   try {
-    const res = await fetch(`${API}/tasks/${taskId}/apply?message=${encodeURIComponent(msg)}`, {
+    const res = await authFetch(`${API}/tasks/${taskId}/apply?message=${encodeURIComponent(msg)}`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { 'Authorization': `Bearer ${getToken()}` }
     });
     const data = await res.json();
     if (res.ok) {

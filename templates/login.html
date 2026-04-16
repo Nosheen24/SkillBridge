@@ -80,6 +80,7 @@
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('refresh_token', data.refresh_token || '');
         localStorage.setItem('user_id', data.user?.id || '');
         localStorage.setItem('user_name', data.user?.email || '');
         window.location.href = '/browse';

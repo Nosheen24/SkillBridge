@@ -25,12 +25,14 @@
   .success { background:#e0f7e9; color:#2e7d32; }
   .error { background:#fdecea; color:#c62828; }
 </style>
+<script src="/static/js/auth.js"></script>
 </head>
 <body>
 <div class="navbar">
   <h1>SkillBridge</h1>
   <div>
     <a href="/browse">Browse</a>
+    <a href="/profile">My Profile</a>
     <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 </div>
@@ -41,8 +43,6 @@
   <div id="applicantsContainer">Loading...</div>
 </div>
 <script>
-const API = 'http://127.0.0.1:8000';
-const token = localStorage.getItem('access_token');
 const taskId = new URLSearchParams(window.location.search).get('task_id');
 
 function logout() {
@@ -60,9 +60,9 @@ function showMsg(text, type) {
 
 async function decide(applicationId, decision) {
   try {
-    const res = await fetch(`${API}/tasks/${taskId}/applications/${applicationId}`, {
+    const res = await authFetch(`${API}/tasks/${taskId}/applications/${applicationId}`, {
       method: 'PATCH',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ decision })
     });
     const data = await res.json();
@@ -76,11 +76,11 @@ async function decide(applicationId, decision) {
 }
 
 async function loadApplicants() {
-  if (!token) return window.location.href = '/login';
+  if (!getToken()) return window.location.href = '/login';
   if (!taskId) { document.getElementById('applicantsContainer').innerHTML = '<p>No task selected.</p>'; return; }
   try {
-    const res = await fetch(`${API}/tasks/${taskId}/applicants`, {
-      headers: { 'Authorization': `Bearer ${token}` }
+    const res = await authFetch(`${API}/tasks/${taskId}/applicants`, {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
     });
     const data = await res.json();
     const container = document.getElementById('applicantsContainer');

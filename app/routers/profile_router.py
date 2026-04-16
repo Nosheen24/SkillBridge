@@ -31,6 +31,7 @@ service_client = create_client(
 ALLOWED_FILE_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".webp"}
 ALLOWED_MIME_PREFIXES = ("image/",)
 PORTFOLIO_BUCKET = "portfolios"
+AVATAR_BUCKET = "avatars"
 
 def parse_profile(profile_data: dict) -> SkillProfileResponse:
     return SkillProfileResponse(
@@ -43,6 +44,7 @@ def parse_profile(profile_data: dict) -> SkillProfileResponse:
         experience=profile_data.get("experience"),
         student_id=profile_data.get("student_id"),
         university=profile_data.get("university"),
+        avatar_url=profile_data.get("avatar_url"),
         portfolio_url=profile_data.get("portfolio_url"),
         portfolio_filename=profile_data.get("portfolio_filename"),
         portfolio_type=profile_data.get("portfolio_type"),
@@ -61,7 +63,7 @@ def parse_profile(profile_data: dict) -> SkillProfileResponse:
 )
 async def get_my_profile(current_user = Depends(get_current_user)):
     try:
-        response = supabase.table("profiles") \
+        response = service_client.table("profiles") \
             .select("*") \
             .eq("id", current_user.id) \
             .execute()
@@ -95,7 +97,7 @@ async def create_skill_profile(
 ):
     try:
         # Check profile exists
-        existing_profile = supabase.table("profiles") \
+        existing_profile = service_client.table("profiles") \
             .select("*") \
             .eq("id", current_user.id) \
             .execute()
@@ -104,7 +106,7 @@ async def create_skill_profile(
             raise HTTPException(status_code=404, detail="Profile not found")
 
         # Update profile
-        updated = supabase.table("profiles").update({
+        updated = service_client.table("profiles").update({
             "skills": profile_data.skills,
             "experience": profile_data.experience,
             "bio": profile_data.bio
@@ -142,7 +144,7 @@ async def edit_skill_profile(
 ):
     try:
         # Check profile exists
-        existing_profile = supabase.table("profiles") \
+        existing_profile = service_client.table("profiles") \
             .select("*") \
             .eq("id", current_user.id) \
             .execute()
@@ -151,7 +153,7 @@ async def edit_skill_profile(
             raise HTTPException(status_code=404, detail="Profile not found")
 
         # Update profile
-        updated = supabase.table("profiles").update({
+        updated = service_client.table("profiles").update({
             "skills": profile_data.skills,
             "experience": profile_data.experience,
             "bio": profile_data.bio
@@ -175,6 +177,53 @@ async def edit_skill_profile(
         )
         
 # Skil-20 changes
+@router.post(
+    "/me/avatar",
+    response_model=SkillProfileResponse,
+    summary="Upload profile picture"
+)
+async def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="No file selected")
+
+        content_type = file.content_type or mimetypes.guess_type(file.filename)[0] or ""
+        if not content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Only image files are allowed")
+
+        file_bytes = await file.read()
+        ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "jpg"
+        unique_filename = f"{current_user.id}/avatar.{ext}"
+
+        # Delete old avatar if exists, then upload new one
+        try:
+            service_client.storage.from_(AVATAR_BUCKET).remove([unique_filename])
+        except Exception:
+            pass
+
+        service_client.storage.from_(AVATAR_BUCKET).upload(
+            unique_filename,
+            file_bytes,
+            {"content-type": content_type, "upsert": "true"}
+        )
+
+        public_url = service_client.storage.from_(AVATAR_BUCKET).get_public_url(unique_filename)
+
+        updated = service_client.table("profiles").update({
+            "avatar_url": public_url
+        }).eq("id", current_user.id).execute()
+
+        return parse_profile(updated.data[0])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.post(
     "/me/portfolio/upload",
     response_model=SkillProfileResponse,
@@ -210,7 +259,7 @@ async def upload_portfolio_file(
 
         portfolio_type = "image" if content_type.startswith("image/") else "pdf"
 
-        updated = supabase.table("profiles").update({
+        updated = service_client.table("profiles").update({
             "portfolio_url": public_url,
             "portfolio_filename": file.filename,
             "portfolio_type": portfolio_type,
@@ -232,7 +281,7 @@ async def save_portfolio_link(
     current_user: dict = Depends(get_current_user)
 ):
     try:
-        updated = supabase.table("profiles").update({
+        updated = service_client.table("profiles").update({
             "portfolio_url": None,
             "portfolio_filename": None,
             "portfolio_type": "link",
