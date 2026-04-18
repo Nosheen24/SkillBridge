@@ -2,82 +2,102 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SkillBridge - Post Task</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/css/post_task.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Post a task — SkillBridge</title>
+<link rel="stylesheet" href="/static/css/skillbridge.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-  .msg { padding:12px; border-radius:8px; margin-bottom:16px; display:none; }
-  .success { background:#e0f7e9; color:#2e7d32; }
-  .error { background:#fdecea; color:#c62828; }
-  .logout-btn { background:#ff4d4d; border:none; color:white; padding:8px 16px; border-radius:8px; cursor:pointer; font-family:Poppins; }
-</style>
-<script src="/static/js/auth.js"></script>
 </head>
 <body>
-<div class="navbar">
-  <h1>SkillBridge</h1>
-  <div>
+
+<nav class="navbar">
+  <div class="brand">SkillBridge</div>
+  <div class="nav-links">
     <a href="/browse">Browse</a>
     <a href="/search">Search</a>
-    <a href="/profile">My Profile</a>
-    <button class="logout-btn" onclick="logout()">Logout</button>
+    <a href="/post-task">Post task</a>
+    <a href="/profile">Profile</a>
+    <button class="logout-btn" onclick="logout()">Log out</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container" style="max-width: 680px">
+
+    <div class="page-header fade-in">
+      <div class="eyebrow">New Listing</div>
+      <h1>Post a micro-task</h1>
+      <p class="subtitle">Tell us what you need done — someone on campus can probably help.</p>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <div class="card fade-in">
+      <form id="postTaskForm">
+
+        <div class="field">
+          <label>Task title</label>
+          <div class="input-group">
+            <i class="fa-solid fa-pen"></i>
+            <input type="text" id="title" placeholder="e.g. Help me build a FastAPI login endpoint" required minlength="5">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Description</label>
+          <textarea id="description" placeholder="What's the task, what's the deliverable, and what does 'done' look like?" required minlength="10"></textarea>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0 14px" class="edit-grid">
+          <div class="field">
+            <label>Category</label>
+            <div class="input-group">
+              <i class="fa-solid fa-layer-group"></i>
+              <input type="text" id="category" placeholder="Programming, Design, Writing..." required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Budget (Rs.)</label>
+            <div class="input-group">
+              <i class="fa-solid fa-coins"></i>
+              <input type="number" step="0.01" id="budget" placeholder="1500" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Deadline <span style="color:var(--text-3); font-weight:400">(optional)</span></label>
+          <div class="input-group">
+            <i class="fa-solid fa-calendar"></i>
+            <input type="datetime-local" id="deadline">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Tags <span style="color:var(--text-3); font-weight:400">(comma-separated)</span></label>
+          <div class="input-group">
+            <i class="fa-solid fa-tags"></i>
+            <input type="text" id="tags" placeholder="python, fastapi, api">
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="postBtn">
+            <i class="fa-solid fa-rocket"></i> Post task
+          </button>
+        </div>
+      </form>
+    </div>
+
   </div>
 </div>
 
-<div class="main">
-<div class="container">
-<h2>Post a Micro Task</h2>
-<p class="tagline">Share small tasks and collaborate with students</p>
-
-<div id="msg" class="msg"></div>
-
-<form id="postTaskForm">
-
-<label>Task Title</label>
-<div class="input-group">
-<i class="fa-solid fa-pen"></i>
-<input type="text" id="title" placeholder="Enter task title" required minlength="5">
-</div>
-
-<label>Description</label>
-<textarea id="description" placeholder="Explain the task in detail" required minlength="10"></textarea>
-
-<label>Category</label>
-<div class="input-group">
-<i class="fa-solid fa-layer-group"></i>
-<input type="text" id="category" placeholder="Example: Programming, Design" required>
-</div>
-
-<label>Budget</label>
-<div class="input-group">
-<i class="fa-solid fa-dollar-sign"></i>
-<input type="number" step="0.01" id="budget" placeholder="Enter budget" required>
-</div>
-
-<label>Deadline</label>
-<div class="input-group">
-<i class="fa-solid fa-calendar"></i>
-<input type="datetime-local" id="deadline">
-</div>
-
-<label>Tags</label>
-<div class="input-group">
-<i class="fa-solid fa-tags"></i>
-<input type="text" id="tags" placeholder="Example: python, fastapi, api">
-</div>
-
-<button type="submit" id="postBtn">Post Task</button>
-</form>
-</div>
-</div>
-
+<script src="/static/js/auth.js"></script>
 <script>
-
 if (!getToken()) window.location.href = '/login';
 
 function logout() {
-  localStorage.clear();
+  clearAuth();
   window.location.href = '/login';
 }
 
@@ -86,7 +106,8 @@ document.getElementById('postTaskForm').addEventListener('submit', async functio
   const msg = document.getElementById('msg');
   const btn = document.getElementById('postBtn');
   msg.style.display = 'none';
-  btn.textContent = 'Posting...'; btn.disabled = true;
+  btn.disabled = true;
+  btn.innerHTML = 'Posting...';
 
   const tagsRaw = document.getElementById('tags').value;
   const tagsArray = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
@@ -104,26 +125,27 @@ document.getElementById('postTaskForm').addEventListener('submit', async functio
   try {
     const res = await authFetch(`${API}/tasks/`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
     const result = await res.json();
     if (res.ok) {
-      msg.textContent = 'Task posted successfully!';
-      msg.className = 'msg success'; msg.style.display = 'block';
-      setTimeout(() => window.location.href = '/browse', 1500);
+      msg.textContent = 'Task posted. Redirecting...';
+      msg.className = 'msg success';
+      msg.style.display = 'block';
+      setTimeout(() => window.location.href = '/browse', 1200);
     } else {
       msg.textContent = result.detail || 'Failed to post task.';
-      msg.className = 'msg error'; msg.style.display = 'block';
+      msg.className = 'msg error';
+      msg.style.display = 'block';
     }
   } catch(e) {
     msg.textContent = 'Cannot connect to server.';
-    msg.className = 'msg error'; msg.style.display = 'block';
+    msg.className = 'msg error';
+    msg.style.display = 'block';
   }
-  btn.textContent = 'Post Task'; btn.disabled = false;
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa-solid fa-rocket"></i> Post task';
 });
 </script>
 </body>

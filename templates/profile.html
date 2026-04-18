@@ -2,213 +2,149 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SkillBridge - My Profile</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profile — SkillBridge</title>
+<link rel="stylesheet" href="/static/css/skillbridge.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; font-family:Poppins,sans-serif; }
-  body { background:linear-gradient(135deg,#667eea,#764ba2); min-height:100vh; }
-
-  /* Navbar */
-  .navbar { display:flex; justify-content:space-between; align-items:center; padding:16px 40px; background:#6c63ff; }
-  .navbar h1 { color:white; font-size:1.4rem; }
-  .navbar a { color:white; text-decoration:none; margin-left:20px; font-size:0.9rem; }
-  .logout-btn { background:#ff4d4d; border:none; color:white; padding:8px 16px; border-radius:8px; cursor:pointer; font-family:Poppins; margin-left:20px; }
-
-  /* Layout */
-  .page { max-width:860px; margin:36px auto; padding:0 20px 60px; }
-
-  /* Profile header card */
-  .profile-header { background:white; border-radius:16px; padding:30px; display:flex; align-items:center; gap:24px; margin-bottom:24px; box-shadow:0 4px 20px rgba(0,0,0,0.12); }
-  .avatar-wrap { position:relative; flex-shrink:0; cursor:pointer; }
-  .avatar { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,#6c63ff,#a78bfa); display:flex; align-items:center; justify-content:center; color:white; font-size:2rem; font-weight:600; overflow:hidden; }
-  .avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
-  .avatar-overlay { position:absolute; inset:0; border-radius:50%; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; opacity:0; transition:0.2s; }
-  .avatar-wrap:hover .avatar-overlay { opacity:1; }
-  .avatar-overlay i { color:white; font-size:1.1rem; }
-  #avatarFileInput { display:none; }
-  .profile-info h2 { font-size:1.3rem; color:#1a1a1a; }
-  .profile-info p { color:#666; font-size:0.9rem; margin-top:4px; }
-  .profile-info .email { color:#6c63ff; font-size:0.85rem; margin-top:2px; }
-
-  /* Section cards */
-  .card { background:white; border-radius:16px; padding:28px; margin-bottom:20px; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
-  .card-title { font-size:1rem; font-weight:600; color:#1a1a1a; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
-  .card-title i { color:#6c63ff; }
-
-  /* Form elements */
-  label { font-size:13px; font-weight:500; color:#444; display:block; margin-bottom:6px; }
-  .field { margin-bottom:18px; }
-  input[type="text"], textarea, .tag-input-box {
-    width:100%; padding:11px 14px; border:1.5px solid #e0e0e0; border-radius:10px;
-    font-family:Poppins; font-size:14px; color:#333; outline:none; transition:border 0.2s;
-  }
-  input[type="text"]:focus, textarea:focus { border-color:#6c63ff; }
-  textarea { resize:vertical; min-height:90px; }
-
-  /* Skills tag input */
-  .tag-input-wrapper { border:1.5px solid #e0e0e0; border-radius:10px; padding:8px 10px; display:flex; flex-wrap:wrap; gap:8px; cursor:text; transition:border 0.2s; }
-  .tag-input-wrapper:focus-within { border-color:#6c63ff; }
-  .skill-tag { background:#ede9ff; color:#6c63ff; padding:4px 10px; border-radius:20px; font-size:13px; display:flex; align-items:center; gap:6px; }
-  .skill-tag button { background:none; border:none; color:#6c63ff; cursor:pointer; font-size:14px; line-height:1; padding:0; }
-  .tag-input-wrapper input { border:none; outline:none; font-family:Poppins; font-size:13px; min-width:120px; flex:1; padding:2px 4px; }
-  .tag-hint { font-size:11px; color:#999; margin-top:4px; }
-
-  /* Buttons */
-  .btn { padding:11px 28px; border:none; border-radius:10px; font-family:Poppins; font-size:14px; font-weight:500; cursor:pointer; transition:0.2s; }
-  .btn-primary { background:#6c63ff; color:white; width:100%; }
-  .btn-primary:hover { background:#5a52e0; }
-  .btn-primary:disabled { background:#aaa; cursor:not-allowed; }
-
-  /* Portfolio section */
-  .portfolio-tabs { display:flex; gap:10px; margin-bottom:18px; }
-  .tab-btn { padding:8px 20px; border-radius:8px; border:1.5px solid #e0e0e0; background:white; font-family:Poppins; font-size:13px; cursor:pointer; color:#555; transition:0.2s; }
-  .tab-btn.active { background:#6c63ff; color:white; border-color:#6c63ff; }
-  .tab-panel { display:none; }
-  .tab-panel.active { display:block; }
-  .portfolio-preview { margin-top:14px; padding:12px 16px; background:#f5f3ff; border-radius:10px; font-size:13px; color:#6c63ff; display:flex; align-items:center; gap:8px; }
-  .portfolio-preview a { color:#6c63ff; text-decoration:none; font-weight:500; }
-  .portfolio-preview a:hover { text-decoration:underline; }
-  input[type="file"] { font-family:Poppins; font-size:13px; color:#555; }
-
-  /* Alert messages */
-  .msg { padding:12px 16px; border-radius:10px; font-size:13px; margin-bottom:16px; display:none; }
-  .msg.success { background:#e0f7e9; color:#2e7d32; }
-  .msg.error { background:#fdecea; color:#c62828; }
-
-  @media(max-width:600px){ .edit-grid{ grid-template-columns:1fr !important; } }
-
-  /* Existing skills display */
-  .current-skills { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
-  .current-skill-tag { background:#ede9ff; color:#6c63ff; padding:5px 12px; border-radius:20px; font-size:13px; }
-</style>
-<script src="/static/js/auth.js"></script>
 </head>
 <body>
 
-<div class="navbar">
-  <h1>SkillBridge</h1>
-  <div>
+<nav class="navbar">
+  <div class="brand">SkillBridge</div>
+  <div class="nav-links">
     <a href="/browse">Browse</a>
     <a href="/search">Search</a>
-    <a href="/post-task">Post Task</a>
-    <a href="/profile">My Profile</a>
-    <button class="logout-btn" onclick="logout()">Logout</button>
+    <a href="/post-task">Post task</a>
+    <a href="/profile">Profile</a>
+    <button class="logout-btn" onclick="logout()">Log out</button>
   </div>
-</div>
+</nav>
 
 <div class="page">
+  <div class="container" style="max-width: 860px">
 
-  <!-- Alert -->
-  <div id="msg" class="msg"></div>
+    <div id="msg" class="msg"></div>
 
-  <!-- Profile Header -->
-  <div class="profile-header" id="profileHeader">
-    <div class="avatar-wrap" onclick="document.getElementById('avatarFileInput').click()" title="Click to change photo">
-      <div class="avatar" id="avatarEl">?</div>
-      <div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>
-    </div>
-    <input type="file" id="avatarFileInput" accept="image/*" onchange="uploadAvatar(this)">
-    <div class="profile-info">
-      <h2 id="headerName">Loading...</h2>
-      <p id="headerUsername"></p>
-      <p class="email" id="headerEmail"></p>
-      <p id="headerUniversity" style="color:#888;font-size:0.82rem;margin-top:2px"></p>
-    </div>
-  </div>
-
-  <!-- Edit Profile Card -->
-  <div class="card">
-    <div class="card-title"><i class="fa-solid fa-pen-to-square"></i> Edit Profile</div>
-
-    <div class="edit-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px">
-      <div class="field">
-        <label>Full Name</label>
-        <input type="text" id="editFullName" placeholder="Your full name">
+    <div class="profile-header fade-in" id="profileHeader">
+      <div class="avatar-wrap" onclick="document.getElementById('avatarFileInput').click()" title="Click to change photo">
+        <div class="avatar" id="avatarEl">?</div>
+        <div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>
       </div>
-      <div class="field">
-        <label>Username</label>
-        <input type="text" id="editUsername" placeholder="@username">
-      </div>
-      <div class="field">
-        <label>University</label>
-        <input type="text" id="editUniversity" placeholder="Your university">
-      </div>
-      <div class="field">
-        <label>Student ID</label>
-        <input type="text" id="editStudentId" placeholder="Student ID">
+      <input type="file" id="avatarFileInput" accept="image/*" onchange="uploadAvatar(this)" style="display:none">
+      <div class="profile-info">
+        <h2 id="headerName">Loading...</h2>
+        <p class="username" id="headerUsername"></p>
+        <p class="email" id="headerEmail"></p>
+        <p class="university" id="headerUniversity"></p>
       </div>
     </div>
 
-    <button class="btn btn-primary" id="editBtn" onclick="editProfile()">
-      <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Save Changes
-    </button>
-  </div>
+    <div class="card fade-in">
+      <div class="card-title"><i class="fa-solid fa-pen-to-square"></i> Personal information</div>
 
-  <!-- Skill Profile Form -->
-  <div class="card">
-    <div class="card-title"><i class="fa-solid fa-id-card"></i> Skill Profile</div>
-
-    <div class="field">
-      <label>Skills <span style="color:#999;font-weight:400">(press Enter or comma to add)</span></label>
-      <div class="tag-input-wrapper" id="tagWrapper" onclick="document.getElementById('tagInput').focus()">
-        <input type="text" id="tagInput" placeholder="e.g. Python, Design...">
+      <div class="edit-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:0 16px">
+        <div class="field">
+          <label>Full name</label>
+          <div class="input-group">
+            <i class="fa-solid fa-user"></i>
+            <input type="text" id="editFullName" placeholder="Your full name">
+          </div>
+        </div>
+        <div class="field">
+          <label>Username</label>
+          <div class="input-group">
+            <i class="fa-solid fa-at"></i>
+            <input type="text" id="editUsername" placeholder="username">
+          </div>
+        </div>
+        <div class="field">
+          <label>University</label>
+          <div class="input-group">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <input type="text" id="editUniversity" placeholder="Your university">
+          </div>
+        </div>
+        <div class="field">
+          <label>Student ID</label>
+          <div class="input-group">
+            <i class="fa-solid fa-id-card"></i>
+            <input type="text" id="editStudentId" placeholder="Student ID">
+          </div>
+        </div>
       </div>
-      <p class="tag-hint">Add at least one skill</p>
-    </div>
 
-    <div class="field">
-      <label>Experience</label>
-      <textarea id="experience" placeholder="Describe your experience, projects, or background..."></textarea>
-    </div>
-
-    <div class="field">
-      <label>Bio <span style="color:#999;font-weight:400">(max 500 chars)</span></label>
-      <textarea id="bio" placeholder="Write a short bio about yourself..." style="min-height:70px" maxlength="500"></textarea>
-    </div>
-
-    <button class="btn btn-primary" id="saveBtn" onclick="saveProfile()">
-      <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Save Skill Profile
-    </button>
-  </div>
-
-  <!-- Portfolio Card -->
-  <div class="card">
-    <div class="card-title"><i class="fa-solid fa-briefcase"></i> Portfolio</div>
-
-    <div id="portfolioPreview" style="display:none" class="portfolio-preview">
-      <i class="fa-solid fa-link"></i>
-      <span id="portfolioPreviewText"></span>
-    </div>
-
-    <div class="portfolio-tabs">
-      <button class="tab-btn active" onclick="switchTab('link')">Portfolio Link</button>
-      <button class="tab-btn" onclick="switchTab('file')">Upload File</button>
-    </div>
-
-    <div id="tab-link" class="tab-panel active">
-      <div class="field">
-        <label>Portfolio / GitHub / LinkedIn URL</label>
-        <input type="text" id="portfolioLink" placeholder="https://github.com/yourname">
-      </div>
-      <button class="btn btn-primary" onclick="savePortfolioLink()">
-        <i class="fa-solid fa-save" style="margin-right:6px"></i>Save Link
+      <button class="btn btn-primary btn-block" id="editBtn" onclick="editProfile()">
+        <i class="fa-solid fa-floppy-disk"></i> Save changes
       </button>
     </div>
 
-    <div id="tab-file" class="tab-panel">
+    <div class="card fade-in">
+      <div class="card-title"><i class="fa-solid fa-sparkles"></i> Skill profile</div>
+
       <div class="field">
-        <label>Upload PDF or Image</label>
-        <input type="file" id="portfolioFile" accept=".pdf,.png,.jpg,.jpeg,.webp">
+        <label>Skills <span style="color:var(--text-3); font-weight:400">(press Enter or comma to add)</span></label>
+        <div class="tag-input-wrapper" id="tagWrapper" onclick="document.getElementById('tagInput').focus()">
+          <input type="text" id="tagInput" placeholder="e.g. Python, Figma, Writing...">
+        </div>
+        <p class="tag-hint">Add at least one skill.</p>
       </div>
-      <button class="btn btn-primary" onclick="uploadPortfolio()">
-        <i class="fa-solid fa-upload" style="margin-right:6px"></i>Upload File
+
+      <div class="field">
+        <label>Experience</label>
+        <textarea id="experience" placeholder="Describe your experience, projects, or background..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Bio <span style="color:var(--text-3); font-weight:400">(max 500 chars)</span></label>
+        <textarea id="bio" placeholder="A short line about yourself." style="min-height:80px" maxlength="500"></textarea>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="saveBtn" onclick="saveProfile()">
+        <i class="fa-solid fa-floppy-disk"></i> Save skill profile
       </button>
     </div>
-  </div>
 
+    <div class="card fade-in">
+      <div class="card-title"><i class="fa-solid fa-briefcase"></i> Portfolio</div>
+
+      <div id="portfolioPreview" style="display:none" class="portfolio-preview">
+        <i class="fa-solid fa-link"></i>
+        <span id="portfolioPreviewText"></span>
+      </div>
+
+      <div class="portfolio-tabs">
+        <button class="tab-btn active" onclick="switchTab('link')">Link</button>
+        <button class="tab-btn" onclick="switchTab('file')">Upload file</button>
+      </div>
+
+      <div id="tab-link" class="tab-panel active">
+        <div class="field">
+          <label>Portfolio / GitHub / LinkedIn URL</label>
+          <div class="input-group">
+            <i class="fa-solid fa-link"></i>
+            <input type="text" id="portfolioLink" placeholder="https://github.com/yourname">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="savePortfolioLink()">
+          <i class="fa-solid fa-save"></i> Save link
+        </button>
+      </div>
+
+      <div id="tab-file" class="tab-panel">
+        <div class="field">
+          <label>Upload PDF or image</label>
+          <input type="file" id="portfolioFile" accept=".pdf,.png,.jpg,.jpeg,.webp">
+        </div>
+        <button class="btn btn-primary" onclick="uploadPortfolio()">
+          <i class="fa-solid fa-upload"></i> Upload file
+        </button>
+      </div>
+    </div>
+
+  </div>
 </div>
 
+<script src="/static/js/auth.js"></script>
 <script>
 if (!getToken()) window.location.href = '/login';
 
@@ -249,7 +185,7 @@ function renderTags() {
   skills.forEach(s => {
     const tag = document.createElement('div');
     tag.className = 'skill-tag';
-    tag.innerHTML = `${s}<button type="button" onclick="removeSkill('${s}')">&times;</button>`;
+    tag.innerHTML = `${s}<button type="button" onclick="removeSkill('${s.replace(/'/g,"\\'")}')">&times;</button>`;
     tagWrapper.insertBefore(tag, tagInput);
   });
 }
@@ -270,13 +206,13 @@ async function uploadAvatar(input) {
   if (!file) return;
   const form = new FormData();
   form.append('file', file);
-  showMsg('Uploading photo...', 'success');
+  showMsg('Uploading photo...', 'info');
   try {
     const res = await authFetch(`${API}/profile/me/avatar`, { method: 'POST', body: form });
     const data = await res.json();
     if (res.ok && data.avatar_url) {
       document.getElementById('avatarEl').innerHTML = `<img src="${data.avatar_url}?t=${Date.now()}" alt="Profile photo">`;
-      showMsg('Profile photo updated!', 'success');
+      showMsg('Profile photo updated.', 'success');
     } else {
       showMsg(data.detail || 'Upload failed', 'error');
     }
@@ -291,7 +227,6 @@ async function loadProfile() {
     if (!res.ok) { showMsg('Failed to load profile', 'error'); return; }
     const p = await res.json();
 
-    /* header */
     const initials = (p.full_name || p.username || p.email || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
     const avatarEl = document.getElementById('avatarEl');
     if (p.avatar_url) {
@@ -304,13 +239,11 @@ async function loadProfile() {
     document.getElementById('headerEmail').textContent = p.email;
     document.getElementById('headerUniversity').textContent = p.university || '';
 
-    /* pre-fill edit profile fields */
-    document.getElementById('editFullName').value  = p.full_name   || '';
-    document.getElementById('editUsername').value  = p.username    || '';
+    document.getElementById('editFullName').value = p.full_name || '';
+    document.getElementById('editUsername').value = p.username || '';
     document.getElementById('editUniversity').value = p.university || '';
-    document.getElementById('editStudentId').value = p.student_id  || '';
+    document.getElementById('editStudentId').value = p.student_id || '';
 
-    /* form */
     if (p.skills && p.skills.length) {
       skills = [...p.skills];
       renderTags();
@@ -318,7 +251,6 @@ async function loadProfile() {
     document.getElementById('experience').value = p.experience || '';
     document.getElementById('bio').value = p.bio || '';
 
-    /* portfolio */
     if (p.portfolio_link) {
       document.getElementById('portfolioLink').value = p.portfolio_link;
       showPortfolioPreview(`<a href="${p.portfolio_link}" target="_blank">${p.portfolio_link}</a>`);
@@ -335,10 +267,11 @@ function showPortfolioPreview(html) {
   el.style.display = 'flex';
 }
 
-/* ── edit profile (personal info) ── */
+/* ── edit profile ── */
 async function editProfile() {
   const btn = document.getElementById('editBtn');
-  btn.disabled = true; btn.textContent = 'Saving...';
+  btn.disabled = true;
+  btn.innerHTML = 'Saving...';
 
   const experience = document.getElementById('experience').value.trim();
   const bio = document.getElementById('bio').value.trim();
@@ -361,7 +294,7 @@ async function editProfile() {
     });
     const data = await res.json();
     if (res.ok) {
-      showMsg('Profile updated successfully!', 'success');
+      showMsg('Profile updated.', 'success');
       document.getElementById('headerName').textContent = data.full_name || data.username || 'No name set';
       document.getElementById('headerUsername').textContent = data.username ? `@${data.username}` : '';
       document.getElementById('headerUniversity').textContent = data.university || '';
@@ -369,7 +302,10 @@ async function editProfile() {
       showMsg(data.detail || 'Failed to update', 'error');
     }
   } catch(e) { showMsg('Error updating profile', 'error'); }
-  finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Save Changes'; }
+  finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save changes';
+  }
 }
 
 /* ── save skill profile ── */
@@ -381,7 +317,8 @@ async function saveProfile() {
   if (!bio) { showMsg('Bio is required', 'error'); return; }
 
   const btn = document.getElementById('saveBtn');
-  btn.disabled = true; btn.textContent = 'Saving...';
+  btn.disabled = true;
+  btn.innerHTML = 'Saving...';
 
   try {
     const res = await authFetch(`${API}/profile/me`, {
@@ -390,10 +327,13 @@ async function saveProfile() {
       body: JSON.stringify({ skills, experience, bio })
     });
     const data = await res.json();
-    if (res.ok) showMsg('Skill profile saved successfully!', 'success');
+    if (res.ok) showMsg('Skill profile saved.', 'success');
     else showMsg(data.detail || 'Failed to save', 'error');
   } catch(e) { showMsg('Error saving profile', 'error'); }
-  finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Save Skill Profile'; }
+  finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save skill profile';
+  }
 }
 
 /* ── portfolio link ── */
@@ -407,8 +347,10 @@ async function savePortfolioLink() {
       body: JSON.stringify({ portfolio_link: link })
     });
     const data = await res.json();
-    if (res.ok) { showMsg('Portfolio link saved!', 'success'); showPortfolioPreview(`<a href="${link}" target="_blank">${link}</a>`); }
-    else showMsg(data.detail || 'Failed to save link', 'error');
+    if (res.ok) {
+      showMsg('Portfolio link saved.', 'success');
+      showPortfolioPreview(`<a href="${link}" target="_blank">${link}</a>`);
+    } else showMsg(data.detail || 'Failed to save link', 'error');
   } catch(e) { showMsg('Error saving link', 'error'); }
 }
 
@@ -419,13 +361,10 @@ async function uploadPortfolio() {
   const form = new FormData();
   form.append('file', file);
   try {
-    const res = await authFetch(`${API}/profile/me/portfolio/upload`, {
-      method: 'POST',
-      body: form
-    });
+    const res = await authFetch(`${API}/profile/me/portfolio/upload`, { method: 'POST', body: form });
     const data = await res.json();
     if (res.ok) {
-      showMsg('Portfolio uploaded!', 'success');
+      showMsg('Portfolio uploaded.', 'success');
       if (data.portfolio_url) showPortfolioPreview(`<a href="${data.portfolio_url}" target="_blank">${data.portfolio_filename || 'View file'}</a>`);
     } else showMsg(data.detail || 'Upload failed', 'error');
   } catch(e) { showMsg('Error uploading file', 'error'); }
@@ -441,7 +380,7 @@ function switchTab(tab) {
 /* ── logout ── */
 function logout() {
   authFetch(`${API}/auth/logout`, { method: 'POST' }).catch(() => {});
-  localStorage.clear();
+  clearAuth();
   window.location.href = '/login';
 }
 

@@ -1,9 +1,93 @@
-import uvicorn
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.config import get_settings
+from app.routers import auth_router, tasks_router, profile_router, ratings_router, admin_router
+from fastapi import Request
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+
+settings = get_settings()
+
+app = FastAPI(
+    title=settings.app_name,
+    version=settings.app_version,
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Routers
+app.include_router(auth_router.router)
+app.include_router(tasks_router.router)
+app.include_router(profile_router.router)
+app.include_router(ratings_router.router)   # Sprint 4
+app.include_router(admin_router.router)     # Sprint 4
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+
+@app.get("/", tags=["Root"])
+async def root():
+    return {"message": "Welcome to SkillBridge API", "version": settings.app_version, "status": "running", "docs": "/docs"}
+
+@app.get("/health", tags=["Health"])
+async def health_check():
+    return {"status": "healthy", "service": settings.app_name, "version": settings.app_version}
+
+# ── Sprint 1–3 pages ──
+@app.get("/register")
+def register_page(request: Request):
+    return templates.TemplateResponse(request, "register.html")
+
+@app.get("/login")
+def login_page(request: Request):
+    return templates.TemplateResponse(request, "login.html")
+
+@app.get("/post-task")
+def post_task_page(request: Request):
+    return templates.TemplateResponse(request, "post_task.html")
+
+@app.get("/search")
+def search_page(request: Request):
+    return templates.TemplateResponse(request, "search_task.html")
+
+@app.get("/browse")
+def browse_tasks_page(request: Request):
+    return templates.TemplateResponse(request, "browse_task.html")
+
+@app.get("/forgot_password")
+def forgot_password_page(request: Request):
+    return templates.TemplateResponse(request, "forgot_password.html")
+
+@app.get("/task_detail")
+def task_detail_page(request: Request):
+    return templates.TemplateResponse(request, "task_detail.html")
+
+@app.get("/applicants")
+def applicants_page(request: Request):
+    return templates.TemplateResponse(request, "applicants.html")
+
+@app.get("/profile")
+def profile_page(request: Request):
+    return templates.TemplateResponse(request, "profile.html")
+
+# ── Sprint 4 pages ──
+@app.get("/ratings")
+def ratings_page(request: Request):
+    return templates.TemplateResponse(request, "ratings.html")
+
+@app.get("/admin")
+def admin_page(request: Request):
+    return templates.TemplateResponse(request, "admin.html")
 
 if __name__ == "__main__":
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True
-    )
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=settings.debug)

@@ -2,51 +2,46 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SkillBridge - Browse Tasks</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/css/browse_task.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Browse tasks — SkillBridge</title>
+<link rel="stylesheet" href="/static/css/skillbridge.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-  .navbar { display:flex; justify-content:space-between; align-items:center; padding:16px 32px; background:#6c63ff; color:white; }
-  .navbar h1 { font-size:1.4rem; margin:0; }
-  .navbar a { color:white; text-decoration:none; margin-left:16px; font-size:0.9rem; }
-  .logout-btn { background:#ff4d4d; border:none; color:white; padding:8px 16px; border-radius:8px; cursor:pointer; font-family:Poppins; }
-  .task-card { background:white; border-radius:12px; padding:20px; margin:16px; box-shadow:0 2px 8px rgba(0,0,0,0.1); color:#333; }
-  .apply-btn { background:#6c63ff; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-family:Poppins; }
-  .apply-btn:disabled { background:#aaa; cursor:not-allowed; }
-  .complete-btn { background:#28a745; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-family:Poppins; margin-left:8px; }
-  .view-applicants-btn { background:#ff9800; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-family:Poppins; margin-left:8px; }
-  .tasks-container { max-width:900px; margin:0 auto; padding:20px; }
-  .tag { background:#e8e4ff; color:#6c63ff; padding:4px 10px; border-radius:20px; font-size:0.8rem; margin-right:4px; }
-  .status-badge { padding:4px 10px; border-radius:20px; font-size:0.8rem; }
-  .status-open { background:#e0f7e9; color:#2e7d32; }
-  .status-completed { background:#fce4ec; color:#c62828; }
-  .msg { padding:12px; border-radius:8px; margin:8px 0; display:none; }
-  .success { background:#e0f7e9; color:#2e7d32; }
-  .error { background:#fdecea; color:#c62828; }
-</style>
-<script src="/static/js/auth.js"></script>
 </head>
 <body>
-<div class="navbar">
-  <h1>SkillBridge</h1>
-  <div>
+
+<nav class="navbar">
+  <div class="brand">SkillBridge</div>
+  <div class="nav-links">
     <a href="/browse">Browse</a>
     <a href="/search">Search</a>
-    <a href="/post-task">Post Task</a>
-    <a href="/profile">My Profile</a>
-    <button class="logout-btn" onclick="logout()">Logout</button>
+    <a href="/post-task">Post task</a>
+    <a href="/ratings">Ratings</a>
+    <a href="/profile">Profile</a>
+    <button class="logout-btn" onclick="logout()">Log out</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container">
+
+    <div class="page-header fade-in">
+      <div class="eyebrow">The Board</div>
+      <h1>Browse open tasks</h1>
+      <p class="subtitle">Everything campus students are currently looking for help with.</p>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <div id="tasksContainer">
+      <div class="loading">Loading tasks</div>
+    </div>
+
   </div>
 </div>
 
-<div class="tasks-container">
-  <h2>Browse Tasks</h2>
-  <div id="msg" class="msg"></div>
-  <div id="tasksContainer">Loading tasks...</div>
-</div>
-
+<script src="/static/js/auth.js"></script>
 <script>
-const userId = localStorage.getItem('user_id');
+const userId = getUserId();
 
 function showMsg(text, type) {
   const m = document.getElementById('msg');
@@ -58,25 +53,21 @@ function showMsg(text, type) {
 
 async function logout() {
   try {
-    await authFetch(`${API}/auth/logout`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${getToken()}` }
-    });
+    await authFetch(`${API}/auth/logout`, { method: 'POST' });
   } catch(e) {}
-  localStorage.clear();
+  clearAuth();
   window.location.href = '/login';
 }
 
 async function applyTask(taskId) {
   if (!getToken()) return window.location.href = '/login';
-  const msg = prompt('Enter your message/bid:') || '';
+  const msg = prompt('Write a short message for the task poster:') || '';
   try {
     const res = await authFetch(`${API}/tasks/${taskId}/apply?message=${encodeURIComponent(msg)}`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${getToken()}` }
+      method: 'POST'
     });
     const data = await res.json();
-    if (res.ok) showMsg('Applied successfully!', 'success');
+    if (res.ok) showMsg('Application sent.', 'success');
     else showMsg(data.detail || 'Failed to apply', 'error');
   } catch(e) { showMsg('Error applying', 'error'); }
 }
@@ -85,19 +76,23 @@ async function markComplete(taskId) {
   if (!getToken()) return window.location.href = '/login';
   if (!confirm('Mark this task as complete?')) return;
   try {
-    const res = await authFetch(`${API}/tasks/${taskId}/complete`, {
-      method: 'PATCH',
-      headers: { 'Authorization': `Bearer ${getToken()}` }
-    });
+    const res = await authFetch(`${API}/tasks/${taskId}/complete`, { method: 'PATCH' });
     const data = await res.json();
-    if (res.ok) { showMsg('Task marked complete!', 'success'); loadTasks(); }
+    if (res.ok) { showMsg('Task marked complete.', 'success'); loadTasks(); }
     else showMsg(data.detail || 'Failed', 'error');
   } catch(e) { showMsg('Error', 'error'); }
 }
 
-async function viewApplicants(taskId) {
-  if (!getToken()) return window.location.href = '/login';
+function viewApplicants(taskId) {
   window.location.href = `/applicants?task_id=${taskId}`;
+}
+
+function viewDetail(taskId) {
+  window.location.href = `/task_detail?id=${taskId}`;
+}
+
+function escape(s) {
+  return (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 async function loadTasks() {
@@ -106,25 +101,56 @@ async function loadTasks() {
     const data = await res.json();
     const container = document.getElementById('tasksContainer');
     if (!data.tasks || data.tasks.length === 0) {
-      container.innerHTML = '<p>No tasks found.</p>'; return;
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fa-solid fa-folder-open"></i>
+          <h3>No tasks yet</h3>
+          <p>Be the first — post a task and kick things off.</p>
+        </div>`;
+      return;
     }
-    container.innerHTML = data.tasks.map(task => `
-      <div class="task-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <h3>${task.title}</h3>
-          <span class="status-badge status-${task.status}">${task.status}</span>
+    container.innerHTML = `<div class="tasks-grid">` + data.tasks.map((task, i) => {
+      const isOwner = task.creator_id === userId;
+      const tags = (task.tags || []).slice(0, 3).map(t => `<span class="tag">${escape(t)}</span>`).join('');
+      return `
+      <div class="task-card fade-in" style="animation-delay: ${0.04 * i}s">
+        <div class="task-card-header">
+          <h3>${escape(task.title)}</h3>
+          <span class="badge badge-${task.status}">${task.status.replace('_',' ')}</span>
         </div>
-        <p>${task.description || 'No description'}</p>
-        <p><strong>Budget:</strong> Rs. ${task.budget || 'N/A'}</p>
-        <p><strong>Posted by:</strong> ${task.creator?.full_name || task.creator?.username || 'Unknown'}</p>
-        <div style="margin-top:12px;">
-          ${task.status === 'open' && task.creator_id !== userId ? `<button class="apply-btn" onclick="applyTask('${task.id}')">Apply</button>` : ''}
-          ${task.creator_id === userId && task.status === 'open' ? `<button class="complete-btn" onclick="markComplete('${task.id}')">Mark Complete</button>` : ''}
-          ${task.creator_id === userId ? `<button class="view-applicants-btn" onclick="viewApplicants('${task.id}')">View Applicants</button>` : ''}
+        <p class="task-desc">${escape(task.description) || 'No description'}</p>
+        <div class="task-meta">
+          <span class="budget"><i class="fa-solid fa-coins"></i> Rs. ${escape(task.budget) || '—'}</span>
+          <span><i class="fa-solid fa-user"></i> ${escape(task.creator?.full_name || task.creator?.username || 'Unknown')}</span>
         </div>
-      </div>
-    `).join('');
-  } catch(e) { document.getElementById('tasksContainer').innerHTML = '<p>Error loading tasks.</p>'; }
+        ${tags ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">${tags}</div>` : ''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="viewDetail('${task.id}')">
+            <i class="fa-solid fa-arrow-right"></i> Details
+          </button>
+          ${task.status === 'open' && !isOwner ? `
+            <button class="btn btn-primary btn-sm" onclick="applyTask('${task.id}')">
+              <i class="fa-solid fa-paper-plane"></i> Apply
+            </button>` : ''}
+          ${isOwner ? `
+            <button class="btn btn-secondary btn-sm" onclick="viewApplicants('${task.id}')">
+              <i class="fa-solid fa-users"></i> Applicants
+            </button>` : ''}
+          ${isOwner && task.status === 'open' ? `
+            <button class="btn btn-success btn-sm" onclick="markComplete('${task.id}')">
+              <i class="fa-solid fa-check"></i> Complete
+            </button>` : ''}
+        </div>
+      </div>`;
+    }).join('') + `</div>`;
+  } catch(e) {
+    document.getElementById('tasksContainer').innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <h3>Couldn't load tasks</h3>
+        <p>Check your connection and try again.</p>
+      </div>`;
+  }
 }
 
 loadTasks();

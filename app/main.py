@@ -1,19 +1,13 @@
-
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
-from app.routers import auth_router, tasks_router, profile_router
+from app.routers import auth_router, tasks_router, profile_router, ratings_router, admin_router
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 
-# Load settings
 settings = get_settings()
 
-
-# Initialize FastAPI application
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
@@ -21,7 +15,6 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,39 +23,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
+# Routers
 app.include_router(auth_router.router)
 app.include_router(tasks_router.router)
 app.include_router(profile_router.router)
+app.include_router(ratings_router.router)
+app.include_router(admin_router.router)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 
 @app.get("/", tags=["Root"])
 async def root():
-
-    return {
-        "message": "Welcome to SkillBridge API",
-        "version": settings.app_version,
-        "status": "running",
-        "docs": "/docs"
-    }
-
+    return {"message": "Welcome to SkillBridge API", "version": settings.app_version, "status": "running", "docs": "/docs"}
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    
-    return {
-        "status": "healthy",
-        "service": settings.app_name,
-        "version": settings.app_version
-    }
-
-
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-templates = Jinja2Templates(directory="templates")
-
-
+    return {"status": "healthy", "service": settings.app_name, "version": settings.app_version}
 
 @app.get("/register")
 def register_page(request: Request):
@@ -99,12 +77,15 @@ def applicants_page(request: Request):
 @app.get("/profile")
 def profile_page(request: Request):
     return templates.TemplateResponse(request, "profile.html")
+
+@app.get("/ratings")
+def ratings_page(request: Request):
+    return templates.TemplateResponse(request, "ratings.html")
+
+@app.get("/admin")
+def admin_page(request: Request):
+    return templates.TemplateResponse(request, "admin.html")
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=settings.debug
-    )
-
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=settings.debug)
