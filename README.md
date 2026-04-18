@@ -22,6 +22,15 @@ This implementation includes all Sprint 2 backend tasks:
 - **SKIL-15**: Apply/Bid on Task API
 - **SKIL-16**: View Applicants API
 
+## Sprint 3 - Task Completion
+
+This implementation includes all Sprint 3 backend tasks:
+
+- **SKIL-17**: Applicant Decision (Accept/Reject)
+- **SKIL-18**: Create Skill Profile (Skills, Experience, Bio)
+- **SKIL-19**: Edit User Profile
+- **SKIL-20**: Portfolio Upload & Link Support
+
 ## Tech Stack
 
 - **Framework**: FastAPI 0.109.0
@@ -43,8 +52,9 @@ se_project_backend/
 │   ├── auth.py              # Authentication utilities
 │   └── routers/
 │       ├── __init__.py
-│       ├── auth_router.py   # Authentication endpoints
-│       └── tasks_router.py  # Task management endpoints
+│       ├── auth_router.py      # Authentication endpoints
+|       ├── tasks_router.py     # Task management endpoints
+│       └── profile_router.py   # Profile management
 ├── database/
 │   └── schema.sql           # Supabase database schema
 ├── .env                     # Environment variables
@@ -250,6 +260,74 @@ Set new password after reset (requires authentication)
 }
 ```
 
+### Profile & Task Management (Sprint 3)
+
+#### POST /profile/me (SKIL-18)
+Create/Save skill profile (Skills, Experience, Bio)
+
+**Request Body:**
+```json
+{
+  "skills": ["Python", "FastAPI"],
+  "experience": "2 years of internship experience",
+  "bio": "Passionate backend developer"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid-here",
+  "skills": ["Python", "FastAPI"],
+  "experience": "2 years of internship experience",
+  "bio": "Passionate backend developer"
+}
+```
+
+#### PUT /profile/me (SKIL-19)
+Update existing profile information
+
+**Request Body:**
+```json
+{
+  "skills": ["Python", "FastAPI", "SQL"],
+  "experience": "3 years of experience",
+  "bio": "Updated bio"
+}
+```
+
+#### GET /profile/me
+Retrieve authenticated user's profile
+
+**Response:**
+```json
+{
+  "id": "uuid-here",
+  "email": "student@example.com",
+  "full_name": "John Doe",
+  "skills": ["Python", "FastAPI", "SQL"],
+  "experience": "3 years of experience"
+}
+```
+
+#### PATCH /tasks/{task_id}/decision (SKIL-17)
+Accept or reject an applicant (only task creator)
+
+**Request Body:**
+```json
+{
+  "decision": "accepted"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Application status updated successfully",
+  "status": "accepted"
+}
+```
+
 ### Tasks (Sprint 1)
 
 #### POST /tasks/ (SKIL-11)
@@ -293,36 +371,6 @@ Browse all tasks
 {
   "tasks": [...],
   "total": 25
-}
-```
-
-#### GET /tasks/search (SKIL-13)
-Search tasks by keyword and filters
-
-**Query Parameters:**
-- `keyword`: Search in title/description
-- `category`: Filter by category
-- `min_budget`: Minimum budget
-- `max_budget`: Maximum budget
-- `status_filter`: Filter by status (default: "open")
-
-**Response:**
-```json
-{
-  "tasks": [...],
-  "total": 5
-}
-```
-
-#### GET /tasks/{task_id}
-Get detailed information about a specific task
-
-**Response:**
-```json
-{
-  "id": "task-uuid",
-  "title": "Build a React Component",
-  "creator": {...}
 }
 ```
 
@@ -389,6 +437,31 @@ Mark a task as complete (only task creator)
   "data": {
     "status": "completed"
   }
+}
+```
+
+### Tasks (Sprint 3)
+
+#### PATCH /tasks/{task_id}/decision (SKIL-17)
+Accept or reject an applicant (only for the task creator)
+
+**Headers:** `Authorization: Bearer <access-token>`
+
+**Request Body:**
+```json
+{
+  "decision": "accepted"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Application status updated successfully",
+  "application_id": "uuid",
+  "task_id": "uuid",
+  "applicant_id": "uuid",
+  "status": "accepted"
 }
 ```
 
@@ -523,21 +596,32 @@ DEBUG=True
 - [x] Error Handling
 - [x] API Documentation
 
+## Sprint 3 Completion Checklist
+
+- [x] SKIL-17: Applicant Decision (Accept/Reject) API
+- [x] SKIL-18: Create Skill Profile API
+- [x] SKIL-19: Edit Profile API
+- [x] SKIL-20: Portfolio Upload & Link Support API
+- [x] Database Schema Migration for Profiles
+- [x] Storage Bucket configuration for Portfolios
+- [x] JWT Authentication on all protected routes
+- [x] Input Validation
+- [x] Error Handling
+- [x] API Documentation
+
 ## Next Steps (Future Sprints)
 
-- Task assignment workflow
-- Real-time chat integration
-- File upload for task attachments
-- Rating and review system
-- Payment integration
-- Notification system
+- View Ratings
+- Give Rating
+- View All Users
+- Remove Content
 
 ## Contributors
 
-- Backend Developer + QA: Nosheen
-- Scrum Master: Ujala Kiran
-- Product Owner: Maheen
-- Frontend Developer: Aniqa Saba
+- Backend Developer + QA: Maheen
+- Scrum Master: Aniqa Saba
+- Product Owner: Nosheen
+- Frontend Developer: Ujala Kiran
 
 
 ## License
