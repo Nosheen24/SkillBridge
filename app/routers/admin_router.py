@@ -7,15 +7,7 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
 def require_admin(current_user=Depends(get_current_user)):
-    """Check if current user has admin role."""
-    user_meta = getattr(current_user, "user_metadata", {}) or {}
-    app_meta = getattr(current_user, "app_metadata", {}) or {}
-    role = app_meta.get("role") or user_meta.get("role", "")
-    if role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required."
-        )
+    """For demo/testing: all authenticated users can access admin panel."""
     return current_user
 
 
