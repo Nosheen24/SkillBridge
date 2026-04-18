@@ -2,99 +2,108 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SkillBridge - Login</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/css/login.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login — SkillBridge</title>
+<link rel="stylesheet" href="/static/css/skillbridge.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-  .forgot-link { display: block; text-align: right; margin-top: -8px; margin-bottom: 16px; font-size: 0.85rem; }
-  .error-msg {
-    background: #fdecea; color: #c62828;
-    padding: 12px 16px; border-radius: 8px;
-    margin-bottom: 16px; font-size: 0.9rem; display: none;
-  }
-</style>
 </head>
 <body>
-<div class="navbar">
-  <h1>SkillBridge</h1>
-  <div>
-    <a href="#">Home</a>
-    <a href="#">About</a>
-    <a href="/register">Register</a>
-  </div>
-</div>
-<div class="main">
-  <div class="container">
-    <h2>Welcome Back</h2>
-    <p class="tagline">Login to continue collaborating</p>
 
-    <div class="error-msg" id="loginError"></div>
+<div class="auth-layout">
 
-    <form id="loginForm">
-      <label>Email</label>
-      <div class="input-group">
-        <i class="fa-solid fa-envelope"></i>
-        <input type="email" id="email" name="email" placeholder="Enter your email" required>
-      </div>
-      <label>Password</label>
-      <div class="input-group">
-        <i class="fa-solid fa-lock"></i>
-        <input type="password" id="password" name="password" placeholder="Enter your password" required>
-      </div>
-      <a href="/forgot_password" class="forgot-link">Forgot password?</a>
-      <button type="submit" id="loginBtn">Login</button>
-    </form>
-
-    <div class="login">
-      Don't have an account? <a href="/register">Register</a>
+  <aside class="auth-brand-panel">
+    <div class="brand-lockup">
+      <div class="logo">SkillBridge</div>
     </div>
-    <div class="about">
-      <strong>SkillBridge</strong><br>
-      A platform where students collaborate by exchanging skills,
-      completing micro-tasks, and building real experience together.
+
+    <div class="tagline-block">
+      <div class="eyebrow">For students. By students.</div>
+      <h2>Trade <em>skills</em>, ship side projects, build real experience.</h2>
+      <p>A campus-scale collaboration network where a design gig, a Python script, and a dissertation edit all live in the same marketplace.</p>
     </div>
-  </div>
+
+    <div class="footer-note">v1.0 · Sprint 4</div>
+  </aside>
+
+  <main class="auth-form-panel">
+    <div class="form-wrap fade-in">
+
+      <h1>Welcome back.</h1>
+      <p class="tagline">Sign in to pick up where you left off.</p>
+
+      <div id="loginError" class="msg error"></div>
+
+      <form id="loginForm">
+        <div class="field">
+          <label>Email</label>
+          <div class="input-group">
+            <i class="fa-solid fa-envelope"></i>
+            <input type="email" id="email" placeholder="you@university.edu" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Password</label>
+          <div class="input-group">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" id="password" placeholder="••••••••" required>
+          </div>
+        </div>
+
+        <a href="/forgot_password" class="forgot-link">Forgot password?</a>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg" id="loginBtn">
+          Sign in
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <div class="footer-link">
+        New here? <a href="/register">Create an account</a>
+      </div>
+
+    </div>
+  </main>
+
 </div>
 
+<script src="/static/js/auth.js"></script>
 <script>
-  const API = 'http://127.0.0.1:8000';
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('loginBtn');
+  const errDiv = document.getElementById('loginError');
 
-  document.getElementById('loginForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const btn = document.getElementById('loginBtn');
-    const errDiv = document.getElementById('loginError');
+  btn.textContent = 'Signing in...';
+  btn.disabled = true;
+  errDiv.style.display = 'none';
 
-    btn.textContent = 'Logging in...';
-    btn.disabled = true;
-    errDiv.style.display = 'none';
-
-    try {
-      const res = await fetch(`${API}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        localStorage.setItem('access_token', data.access_token);
-        localStorage.setItem('refresh_token', data.refresh_token || '');
-        localStorage.setItem('user_id', data.user?.id || '');
-        localStorage.setItem('user_name', data.user?.email || '');
-        window.location.href = '/browse';
-      } else {
-        errDiv.textContent = data.detail || 'Invalid email or password.';
-        errDiv.style.display = 'block';
-      }
-    } catch (err) {
-      errDiv.textContent = 'Cannot connect to server.';
+  try {
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.setItem('access_token', data.access_token);
+      localStorage.setItem('refresh_token', data.refresh_token || '');
+      localStorage.setItem('user_id', data.user?.id || '');
+      localStorage.setItem('user_name', data.user?.email || '');
+      window.location.href = '/browse';
+    } else {
+      errDiv.textContent = data.detail || 'Invalid email or password.';
       errDiv.style.display = 'block';
     }
-    btn.textContent = 'Login';
-    btn.disabled = false;
-  });
+  } catch (err) {
+    errDiv.textContent = 'Cannot connect to server.';
+    errDiv.style.display = 'block';
+  }
+  btn.innerHTML = 'Sign in <i class="fa-solid fa-arrow-right"></i>';
+  btn.disabled = false;
+});
 </script>
 </body>
 </html>

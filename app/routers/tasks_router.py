@@ -1,5 +1,3 @@
-
-
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 from app.models import (        # Sprint 3 changes(Skil-17)
     TaskCreateRequest,
@@ -471,12 +469,16 @@ async def mark_task_complete(
         if task.data[0]["status"] == "completed":
             raise HTTPException(status_code=400, detail="Task is already completed")
 
-        # Update task status to completed
-        updated = supabase.table("tasks").update(
+        # Update task status to completed (use service client to bypass RLS)
+        write_db = _service_client()
+        updated = write_db.table("tasks").update(
             {"status": "completed"}
         ).eq("id", task_id).execute()
 
-        return {"message": "Task marked as complete", "data": updated.data[0]}
+        if not updated.data:
+            raise HTTPException(status_code=500, detail="Failed to update task status")
+
+        return {"message": "Task marked as complete", "task_id": task_id, "status": "completed"}
 
     except HTTPException:
         raise

@@ -179,3 +179,41 @@ class SkillProfileUpdateRequest(BaseModel):
 # Skil-20 updates 
 class PortfolioLinkRequest(BaseModel):
     portfolio_link: str = Field(..., min_length=1, max_length=1000)
+
+
+class RatingCreateRequest(BaseModel):
+    task_id: str
+    rating: int = Field(..., ge=1, le=5)
+    review: Optional[str] = Field(None, max_length=1000)
+ 
+ 
+class RaterInfo(BaseModel):
+    full_name: Optional[str] = None
+    username: Optional[str] = None
+    avatar_url: Optional[str] = None
+ 
+ 
+class TaskInfo(BaseModel):
+    title: Optional[str] = None
+ 
+ 
+class RatingResponse(BaseModel):
+    id: str
+    task_id: str
+    rated_user_id: str
+    rater_user_id: str
+    rating: int
+    review: Optional[str] = None
+    rater: Optional[RaterInfo] = None
+    task: Optional[TaskInfo] = None
+    created_at: Optional[datetime] = None
+ 
+    class Config:
+        from_attributes = True
+ 
+ 
+class RatingsListResponse(BaseModel):
+    ratings: List[RatingResponse]
+    total: int
+    average_rating: float
+ 

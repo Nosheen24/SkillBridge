@@ -2,51 +2,48 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SkillBridge - Applicants</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Applicants — SkillBridge</title>
+<link rel="stylesheet" href="/static/css/skillbridge.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-  * { font-family: Poppins, sans-serif; margin:0; padding:0; box-sizing:border-box; }
-  body { background: linear-gradient(135deg, #6c63ff, #a78bfa); min-height:100vh; }
-  .navbar { display:flex; justify-content:space-between; align-items:center; padding:16px 32px; background:#6c63ff; color:white; }
-  .navbar h1 { font-size:1.4rem; }
-  .navbar a { color:white; text-decoration:none; margin-left:16px; }
-  .logout-btn { background:#ff4d4d; border:none; color:white; padding:8px 16px; border-radius:8px; cursor:pointer; font-family:Poppins; }
-  .container { max-width:800px; margin:40px auto; background:white; border-radius:16px; padding:32px; }
-  .applicant-card { border:1px solid #eee; border-radius:12px; padding:16px; margin:12px 0; }
-  .back-btn { background:#6c63ff; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-family:Poppins; margin-bottom:20px; }
-  .accept-btn { background:#28a745; color:white; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-family:Poppins; margin-right:8px; }
-  .reject-btn { background:#dc3545; color:white; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-family:Poppins; }
-  .accept-btn:disabled, .reject-btn:disabled { background:#aaa; cursor:not-allowed; }
-  .status-accepted { color:#28a745; font-weight:600; }
-  .status-rejected { color:#dc3545; font-weight:600; }
-  .status-pending { color:#f59e0b; font-weight:600; }
-  .msg { padding:10px 16px; border-radius:8px; margin:8px 0; display:none; }
-  .success { background:#e0f7e9; color:#2e7d32; }
-  .error { background:#fdecea; color:#c62828; }
-</style>
-<script src="/static/js/auth.js"></script>
 </head>
 <body>
-<div class="navbar">
-  <h1>SkillBridge</h1>
-  <div>
+
+<nav class="navbar">
+  <div class="brand">SkillBridge</div>
+  <div class="nav-links">
     <a href="/browse">Browse</a>
-    <a href="/profile">My Profile</a>
-    <button class="logout-btn" onclick="logout()">Logout</button>
+    <a href="/search">Search</a>
+    <a href="/post-task">Post task</a>
+    <a href="/profile">Profile</a>
+    <button class="logout-btn" onclick="logout()">Log out</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container" style="max-width:820px">
+    <a href="/browse" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to tasks</a>
+
+    <div class="page-header fade-in">
+      <div class="eyebrow">Inbound</div>
+      <h1>Applicants</h1>
+      <p class="subtitle">Review who applied and pick your collaborator.</p>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <div id="applicantsContainer">
+      <div class="loading">Loading applicants</div>
+    </div>
   </div>
 </div>
-<div class="container">
-  <button class="back-btn" onclick="window.location.href='/browse'">← Back to Tasks</button>
-  <h2>Task Applicants</h2>
-  <div id="msg" class="msg"></div>
-  <div id="applicantsContainer">Loading...</div>
-</div>
+
+<script src="/static/js/auth.js"></script>
 <script>
-const taskId = new URLSearchParams(window.location.search).get('task_id');
+const taskId = new URLSearchParams(window.location.search).get('task_id') || new URLSearchParams(window.location.search).get('id');
 
 function logout() {
-  localStorage.clear();
+  clearAuth();
   window.location.href = '/login';
 }
 
@@ -58,16 +55,20 @@ function showMsg(text, type) {
   setTimeout(() => m.style.display = 'none', 3000);
 }
 
+function escape(s) {
+  return (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 async function decide(applicationId, decision) {
   try {
     const res = await authFetch(`${API}/tasks/${taskId}/applications/${applicationId}`, {
       method: 'PATCH',
-      headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ decision })
     });
     const data = await res.json();
     if (res.ok) {
-      showMsg(`Applicant ${decision} successfully!`, 'success');
+      showMsg(`Applicant ${decision}.`, 'success');
       loadApplicants();
     } else {
       showMsg(data.detail || 'Action failed', 'error');
@@ -77,36 +78,75 @@ async function decide(applicationId, decision) {
 
 async function loadApplicants() {
   if (!getToken()) return window.location.href = '/login';
-  if (!taskId) { document.getElementById('applicantsContainer').innerHTML = '<p>No task selected.</p>'; return; }
+  if (!taskId) {
+    document.getElementById('applicantsContainer').innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-circle-question"></i>
+        <h3>No task selected</h3>
+        <p>Head back and pick a task to view its applicants.</p>
+      </div>`;
+    return;
+  }
   try {
-    const res = await authFetch(`${API}/tasks/${taskId}/applicants`, {
-      headers: { 'Authorization': `Bearer ${getToken()}` }
-    });
+    const res = await authFetch(`${API}/tasks/${taskId}/applicants`);
     const data = await res.json();
     const container = document.getElementById('applicantsContainer');
-    if (!res.ok) { container.innerHTML = `<p style="color:red">${data.detail}</p>`; return; }
-    if (!data.applicants || data.applicants.length === 0) {
-      container.innerHTML = '<p>No applicants yet.</p>'; return;
+
+    if (!res.ok) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <h3>Couldn't load</h3>
+          <p>${escape(data.detail)}</p>
+        </div>`;
+      return;
     }
-    container.innerHTML = `<p style="margin-bottom:12px"><strong>Total: ${data.total_applicants} applicants</strong></p>` +
-      data.applicants.map(app => `
-        <div class="applicant-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <h3>${app.profiles?.full_name || app.profiles?.username || 'Unknown'}</h3>
-            <span class="status-${app.status}">${app.status.charAt(0).toUpperCase() + app.status.slice(1)}</span>
+
+    if (!data.applicants || data.applicants.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fa-solid fa-inbox"></i>
+          <h3>No applicants yet</h3>
+          <p>Sit tight — once someone applies they'll show up here.</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="results-header">
+        <div class="count"><strong>${data.total_applicants}</strong> ${data.total_applicants === 1 ? 'applicant' : 'applicants'}</div>
+      </div>
+      ${data.applicants.map((app, i) => `
+        <div class="applicant-card fade-in" style="animation-delay:${0.05 * i}s">
+          <div class="header">
+            <h3>${escape(app.profiles?.full_name || app.profiles?.username || 'Unknown')}</h3>
+            <span class="badge badge-${app.status}">${escape(app.status)}</span>
           </div>
-          <p><strong>Email:</strong> ${app.profiles?.email || 'N/A'}</p>
-          <p><strong>University:</strong> ${app.profiles?.university || 'N/A'}</p>
-          <p style="margin-bottom:12px"><strong>Message:</strong> ${app.message || 'No message'}</p>
+          <div class="meta-row">
+            <span><i class="fa-solid fa-envelope"></i> <strong>${escape(app.profiles?.email) || 'N/A'}</strong></span>
+            <span><i class="fa-solid fa-graduation-cap"></i> <strong>${escape(app.profiles?.university) || 'N/A'}</strong></span>
+          </div>
+          ${app.message ? `<div class="message-box">"${escape(app.message)}"</div>` : `<p class="text-muted text-sm" style="margin-bottom:14px">No message provided.</p>`}
           ${app.status === 'pending' ? `
-          <div>
-            <button class="accept-btn" onclick="decide('${app.id}', 'accepted')">Accept</button>
-            <button class="reject-btn" onclick="decide('${app.id}', 'rejected')">Reject</button>
-          </div>` : ''}
+            <div class="actions">
+              <button class="btn btn-success btn-sm" onclick="decide('${app.id}', 'accepted')">
+                <i class="fa-solid fa-check"></i> Accept
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="decide('${app.id}', 'rejected')">
+                <i class="fa-solid fa-xmark"></i> Reject
+              </button>
+            </div>` : ''}
         </div>
-      `).join('');
-  } catch(e) { document.getElementById('applicantsContainer').innerHTML = '<p>Error loading applicants.</p>'; }
+      `).join('')}`;
+  } catch(e) {
+    document.getElementById('applicantsContainer').innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <h3>Error loading</h3>
+      </div>`;
+  }
 }
+
 loadApplicants();
 </script>
 </body>

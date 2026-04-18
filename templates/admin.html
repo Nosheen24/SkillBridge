@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Panel — SkillBridge</title>
+<link rel="stylesheet" href="/static/css/skillbridge.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.admin-tabs { display:flex; gap:8px; margin-bottom:28px; flex-wrap:wrap; }
+.admin-tab {
+  padding:9px 22px;
+  border-radius:var(--r-full);
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text-2);
+  font-size:0.85rem;
+  cursor:pointer;
+  transition:all .2s;
+}
+.admin-tab.active {
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#000;
+  font-weight:600;
+}
+
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:14px; margin-bottom:28px; }
+.stat-card {
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:20px 18px;
+  text-align:center;
+}
+.stat-number { font-size:2rem; font-weight:700; color:var(--accent); line-height:1; margin-bottom:6px; }
+.stat-label { font-size:0.78rem; color:var(--text-2); text-transform:uppercase; letter-spacing:0.05em; }
+
+.user-table {
+  width:100%;
+  border-collapse:collapse;
+}
+.user-table th {
+  padding:10px 14px;
+  text-align:left;
+  font-size:0.78rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  color:var(--text-3);
+  border-bottom:1px solid var(--border);
+}
+.user-table td {
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  font-size:0.88rem;
+  color:var(--text-1);
+  vertical-align:middle;
+}
+.user-table tr:last-child td { border-bottom:none; }
+.user-table tr:hover td { background:var(--bg-3); }
+
+.user-avatar-sm {
+  width:34px; height:34px; border-radius:50%;
+  background:var(--bg-3); border:1px solid var(--border);
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:0.8rem; font-weight:600; color:var(--accent);
+  overflow:hidden; vertical-align:middle; margin-right:10px;
+}
+.user-avatar-sm img { width:100%; height:100%; object-fit:cover; }
+
+.search-row { display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+.search-row .input-group { flex:1; min-width:200px; }
+
+.pagination { display:flex; gap:8px; align-items:center; justify-content:center; margin-top:20px; }
+.page-btn {
+  padding:7px 14px;
+  border-radius:var(--r-sm);
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text-2);
+  cursor:pointer;
+  font-size:0.85rem;
+  transition:all .2s;
+}
+.page-btn:hover { border-color:var(--accent); color:var(--accent); }
+.page-btn.active { background:var(--accent); border-color:var(--accent); color:#000; font-weight:600; }
+.page-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+.confirm-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:none; align-items:center; justify-content:center; z-index:1000;
+}
+.confirm-overlay.show { display:flex; }
+.confirm-box {
+  background:var(--bg-2); border:1px solid var(--border-strong);
+  border-radius:var(--r-lg); padding:28px; max-width:400px; width:90%;
+}
+.confirm-box h3 { margin-bottom:10px; color:var(--danger); }
+.confirm-box p { color:var(--text-1); margin-bottom:22px; font-size:0.9rem; line-height:1.6; }
+.confirm-actions { display:flex; gap:10px; }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand">SkillBridge <span style="font-size:0.7rem;color:var(--danger);background:var(--danger-bg);padding:2px 8px;border-radius:var(--r-full);margin-left:6px">ADMIN</span></div>
+  <div class="nav-links">
+    <a href="/browse">Browse</a>
+    <a href="/profile">Profile</a>
+    <button class="logout-btn" onclick="logout()">Log out</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container" style="max-width:1000px">
+
+    <div class="page-header fade-in">
+      <div class="eyebrow">Control centre</div>
+      <h1>Admin Panel</h1>
+      <p class="subtitle">Monitor users, manage content, keep the platform clean.</p>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <!-- Stats -->
+    <div class="stat-grid" id="statsGrid">
+      <div class="stat-card"><div class="stat-number" id="s-users">—</div><div class="stat-label">Users</div></div>
+      <div class="stat-card"><div class="stat-number" id="s-tasks">—</div><div class="stat-label">Tasks</div></div>
+      <div class="stat-card"><div class="stat-number" id="s-open">—</div><div class="stat-label">Open</div></div>
+      <div class="stat-card"><div class="stat-number" id="s-done">—</div><div class="stat-label">Completed</div></div>
+      <div class="stat-card"><div class="stat-number" id="s-ratings">—</div><div class="stat-label">Reviews</div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchTab('users')"><i class="fa-solid fa-users"></i> Users</button>
+      <button class="admin-tab" onclick="switchTab('tasks')"><i class="fa-solid fa-list-check"></i> Tasks</button>
+      <button class="admin-tab" onclick="switchTab('ratings')"><i class="fa-solid fa-star"></i> Reviews</button>
+    </div>
+
+    <!-- USERS TAB -->
+    <div id="tab-users">
+      <div class="search-row">
+        <div class="input-group">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="userSearch" placeholder="Search by name, email or username…" oninput="debounceSearch()">
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadUsers(1)"><i class="fa-solid fa-rotate"></i> Refresh</button>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="usersTableWrap">
+          <div class="loading" style="padding:32px">Loading users</div>
+        </div>
+      </div>
+      <div class="pagination" id="usersPagination"></div>
+    </div>
+
+    <!-- TASKS TAB -->
+    <div id="tab-tasks" style="display:none">
+      <div class="search-row">
+        <button class="btn btn-ghost btn-sm" onclick="loadTasks()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+      </div>
+      <div id="tasksContainer">
+        <div class="loading">Loading tasks</div>
+      </div>
+    </div>
+
+    <!-- RATINGS TAB -->
+    <div id="tab-ratings" style="display:none">
+      <div class="search-row">
+        <button class="btn btn-ghost btn-sm" onclick="loadAllRatings()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+      </div>
+      <div id="ratingsContainer">
+        <div class="loading">Loading reviews</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Confirm dialog -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3><i class="fa-solid fa-triangle-exclamation"></i> Confirm deletion</h3>
+    <p id="confirmMsg">Are you sure? This action cannot be undone.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-danger" id="confirmYes">Delete</button>
+      <button class="btn btn-ghost" onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/auth.js"></script>
+<script>
+if (!getToken()) window.location.href = '/login';
+
+let currentPage = 1;
+let searchTimeout = null;
+
+function showMsg(text, type) {
+  const m = document.getElementById('msg');
+  m.textContent = text;
+  m.className = 'msg ' + type;
+  m.style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(() => m.style.display = 'none', 3500);
+}
+
+function escape(s) {
+  return (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function logout() {
+  authFetch(`${API}/auth/logout`, { method: 'POST' }).catch(() => {});
+  clearAuth();
+  window.location.href = '/login';
+}
+
+function switchTab(tab) {
+  ['users','tasks','ratings'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.admin-tab').forEach((b,i) => {
+    b.classList.toggle('active', ['users','tasks','ratings'][i] === tab);
+  });
+  if (tab === 'tasks') loadTasks();
+  if (tab === 'ratings') loadAllRatings();
+}
+
+// ── Stats ──
+async function loadStats() {
+  try {
+    const res = await authFetch(`${API}/admin/stats`);
+    const d = await res.json();
+    if (res.ok) {
+      document.getElementById('s-users').textContent = d.total_users;
+      document.getElementById('s-tasks').textContent = d.total_tasks;
+      document.getElementById('s-open').textContent = d.open_tasks;
+      document.getElementById('s-done').textContent = d.completed_tasks;
+      document.getElementById('s-ratings').textContent = d.total_ratings;
+    }
+  } catch(e) {}
+}
+
+// ── Users ──
+async function loadUsers(page = 1) {
+  currentPage = page;
+  const search = document.getElementById('userSearch').value.trim();
+  const params = new URLSearchParams({ page, limit: 20 });
+  if (search) params.set('search', search);
+
+  const wrap = document.getElementById('usersTableWrap');
+  wrap.innerHTML = '<div class="loading" style="padding:32px">Loading…</div>';
+
+  try {
+    const res = await authFetch(`${API}/admin/users?${params}`);
+    const d = await res.json();
+
+    if (!res.ok) {
+      wrap.innerHTML = `<p style="padding:24px;color:var(--danger)">${escape(d.detail)}</p>`;
+      return;
+    }
+
+    const { users, total, limit } = d;
+    const totalPages = Math.ceil(total / limit);
+
+    if (!users.length) {
+      wrap.innerHTML = '<div class="empty-state" style="padding:32px"><i class="fa-solid fa-users-slash"></i><h3>No users found</h3></div>';
+      document.getElementById('usersPagination').innerHTML = '';
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>University</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map(u => {
+            const initials = (u.full_name || u.username || u.email || '?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+            const joined = u.created_at ? new Date(u.created_at).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}) : '—';
+            return `
+            <tr>
+              <td>
+                <span class="user-avatar-sm">${u.avatar_url ? `<img src="${escape(u.avatar_url)}" alt="">` : initials}</span>
+                <strong>${escape(u.full_name || u.username || '—')}</strong>
+                ${u.username ? `<span style="color:var(--text-3);font-size:0.8rem;margin-left:4px">@${escape(u.username)}</span>` : ''}
+              </td>
+              <td>${escape(u.email)}</td>
+              <td>${escape(u.university || '—')}</td>
+              <td>${escape(joined)}</td>
+              <td>
+                <button class="btn btn-ghost btn-sm" style="margin-right:6px" onclick="window.location.href='/ratings?user_id=${u.id}'">
+                  <i class="fa-solid fa-star"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="confirmDelete('user','${u.id}','${escape(u.full_name || u.email)}')">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+
+    // Pagination
+    const pag = document.getElementById('usersPagination');
+    if (totalPages <= 1) { pag.innerHTML = ''; return; }
+    let btns = `<button class="page-btn" onclick="loadUsers(${page-1})" ${page<=1?'disabled':''}>‹ Prev</button>`;
+    for (let p = Math.max(1, page-2); p <= Math.min(totalPages, page+2); p++) {
+      btns += `<button class="page-btn ${p===page?'active':''}" onclick="loadUsers(${p})">${p}</button>`;
+    }
+    btns += `<button class="page-btn" onclick="loadUsers(${page+1})" ${page>=totalPages?'disabled':''}>Next ›</button>`;
+    pag.innerHTML = btns;
+
+  } catch(e) {
+    wrap.innerHTML = '<p style="padding:24px;color:var(--danger)">Error loading users.</p>';
+  }
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => loadUsers(1), 400);
+}
+
+// ── Tasks (admin view) ──
+async function loadTasks() {
+  const container = document.getElementById('tasksContainer');
+  container.innerHTML = '<div class="loading">Loading tasks</div>';
+  try {
+    const res = await authFetch(`${API}/tasks/`);
+    const d = await res.json();
+    if (!d.tasks || !d.tasks.length) {
+      container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-folder-open"></i><h3>No tasks</h3></div>';
+      return;
+    }
+    container.innerHTML = `
+      <table class="user-table">
+        <thead><tr><th>Title</th><th>Status</th><th>Budget</th><th>Creator</th><th>Created</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${d.tasks.map(t => {
+            const date = t.created_at ? new Date(t.created_at).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}) : '—';
+            return `
+            <tr>
+              <td><strong>${escape(t.title)}</strong></td>
+              <td><span class="badge badge-${t.status}">${escape(t.status)}</span></td>
+              <td>Rs. ${escape(t.budget)}</td>
+              <td>${escape(t.creator?.full_name || t.creator?.username || '—')}</td>
+              <td>${escape(date)}</td>
+              <td>
+                <button class="btn btn-ghost btn-sm" style="margin-right:6px" onclick="window.location.href='/task_detail?id=${t.id}'">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="confirmDelete('task','${t.id}','${escape(t.title)}')">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) {
+    container.innerHTML = '<p style="color:var(--danger)">Error loading tasks.</p>';
+  }
+}
+
+// ── Ratings (admin view) ──
+async function loadAllRatings() {
+  const container = document.getElementById('ratingsContainer');
+  container.innerHTML = '<div class="loading">Loading reviews</div>';
+  try {
+    // We load ratings for a broad query — using all users' ratings page
+    const res = await authFetch(`${API}/ratings/user/all`);
+    const d = await res.json();
+
+    // Fallback: if endpoint doesn't exist, show message
+    if (!res.ok) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fa-solid fa-star"></i>
+          <h3>Use the Ratings page to view specific reviews</h3>
+          <p>Go to <a href="/ratings" style="color:var(--accent)">Ratings page</a> and enter a user ID, or use the Users tab above to jump to a user's ratings.</p>
+        </div>`;
+      return;
+    }
+  } catch(e) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-star"></i>
+        <h3>View ratings per user</h3>
+        <p>Click the <i class="fa-solid fa-star"></i> icon next to a user in the Users tab to see their reviews, or go to the <a href="/ratings" style="color:var(--accent)">Ratings page</a>.</p>
+      </div>`;
+  }
+}
+
+// ── Delete confirm dialog ──
+let pendingDelete = null;
+
+function confirmDelete(type, id, name) {
+  pendingDelete = { type, id };
+  document.getElementById('confirmMsg').textContent = `Delete ${type} "${name}"? This cannot be undone and will remove all related data.`;
+  document.getElementById('confirmOverlay').classList.add('show');
+  document.getElementById('confirmYes').onclick = () => doDelete(type, id);
+}
+
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+  pendingDelete = null;
+}
+
+async function doDelete(type, id) {
+  closeConfirm();
+  try {
+    const endpoint = type === 'user' ? `admin/users/${id}` : type === 'task' ? `admin/tasks/${id}` : `admin/ratings/${id}`;
+    const res = await authFetch(`${API}/${endpoint}`, { method: 'DELETE' });
+    const d = await res.json();
+    if (res.ok) {
+      showMsg(`${type.charAt(0).toUpperCase()+type.slice(1)} deleted successfully.`, 'success');
+      if (type === 'user') loadUsers(currentPage);
+      if (type === 'task') loadTasks();
+      if (type === 'rating') loadAllRatings();
+      loadStats();
+    } else {
+      showMsg(d.detail || 'Delete failed', 'error');
+    }
+  } catch(e) { showMsg('Error deleting', 'error'); }
+}
+
+// Close overlay on background click
+document.getElementById('confirmOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeConfirm();
+});
+
+// ── Init ──
+loadStats();
+loadUsers(1);
+</script>
+</body>
+</html>

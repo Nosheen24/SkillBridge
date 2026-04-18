@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ratings — SkillBridge</title>
+<link rel="stylesheet" href="/static/css/skillbridge.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.stars-display { display:flex; gap:4px; }
+.stars-display i { font-size:1rem; color:var(--text-3); }
+.stars-display i.filled { color:var(--amber); }
+
+.star-picker { display:flex; gap:6px; cursor:pointer; margin-bottom:8px; }
+.star-picker i { font-size:1.6rem; color:var(--text-3); transition:color .15s, transform .15s; }
+.star-picker i:hover,
+.star-picker i.selected { color:var(--amber); transform:scale(1.15); }
+
+.rating-card {
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:20px 24px;
+  margin-bottom:14px;
+  transition:border-color .2s;
+}
+.rating-card:hover { border-color:var(--border-strong); }
+
+.rating-header { display:flex; align-items:center; gap:14px; margin-bottom:10px; }
+.rating-avatar {
+  width:42px; height:42px; border-radius:50%;
+  background:var(--bg-3); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:600; font-size:0.9rem; color:var(--accent);
+  flex-shrink:0; overflow:hidden;
+}
+.rating-avatar img { width:100%; height:100%; object-fit:cover; }
+.rating-meta h4 { font-size:0.95rem; font-weight:600; margin-bottom:2px; }
+.rating-meta .task-name { font-size:0.8rem; color:var(--text-2); }
+.rating-date { margin-left:auto; font-size:0.78rem; color:var(--text-3); }
+.rating-review { font-size:0.9rem; color:var(--text-1); line-height:1.6; margin-top:10px; font-style:italic; }
+
+.avg-score-block {
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:28px 24px;
+  display:flex; align-items:center; gap:24px;
+  margin-bottom:28px;
+}
+.avg-number { font-size:3rem; font-weight:700; color:var(--amber); line-height:1; }
+.avg-label { color:var(--text-2); font-size:0.85rem; margin-top:4px; }
+
+.give-rating-form {
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:24px;
+  margin-bottom:28px;
+}
+.give-rating-form h3 { margin-bottom:18px; font-size:1rem; color:var(--text-0); }
+
+.section-divider {
+  border:none;
+  border-top:1px solid var(--border);
+  margin:28px 0;
+}
+
+.empty-stars { color:var(--text-3); font-size:0.9rem; }
+
+/* Tab system */
+.view-tabs { display:flex; gap:8px; margin-bottom:24px; }
+.view-tab {
+  padding:8px 20px;
+  border-radius:var(--r-full);
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text-2);
+  font-size:0.85rem;
+  cursor:pointer;
+  transition:all .2s;
+}
+.view-tab.active {
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#000;
+  font-weight:600;
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand">SkillBridge</div>
+  <div class="nav-links">
+    <a href="/browse">Browse</a>
+    <a href="/search">Search</a>
+    <a href="/post-task">Post task</a>
+    <a href="/ratings">Ratings</a>
+    <a href="/profile">Profile</a>
+    <button class="logout-btn" onclick="logout()">Log out</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container" style="max-width:760px">
+
+    <div class="page-header fade-in">
+      <div class="eyebrow">Community trust</div>
+      <h1>Ratings &amp; Reviews</h1>
+      <p class="subtitle">See how the community rates their collaborators.</p>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <!-- Tabs: view ratings / give rating -->
+    <div class="view-tabs">
+      <button class="view-tab active" onclick="switchTab('view')">
+        <i class="fa-solid fa-star"></i> View ratings
+      </button>
+      <button class="view-tab" onclick="switchTab('give')">
+        <i class="fa-solid fa-pen-to-square"></i> Give a rating
+      </button>
+    </div>
+
+    <!-- VIEW RATINGS TAB -->
+    <div id="tab-view">
+      <div class="field" style="margin-bottom:20px">
+        <div class="input-group">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchUserId" placeholder="Enter User ID or paste profile URL to view their ratings">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-primary btn-sm" onclick="loadRatings()">
+            <i class="fa-solid fa-search"></i> Load ratings
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="loadMyRatings()">
+            <i class="fa-solid fa-user"></i> My ratings
+          </button>
+        </div>
+      </div>
+
+      <div id="ratingsContainer"></div>
+    </div>
+
+    <!-- GIVE RATING TAB -->
+    <div id="tab-give" style="display:none">
+      <div class="give-rating-form fade-in">
+        <h3><i class="fa-solid fa-star" style="color:var(--amber)"></i> Submit a review</h3>
+
+        <div class="field">
+          <label>User ID to rate</label>
+          <div class="input-group">
+            <i class="fa-solid fa-user"></i>
+            <input type="text" id="rateUserId" placeholder="Paste the freelancer's user ID">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Task ID (must be a completed task you were part of)</label>
+          <div class="input-group">
+            <i class="fa-solid fa-briefcase"></i>
+            <input type="text" id="rateTaskId" placeholder="Paste the task ID">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Your rating</label>
+          <div class="star-picker" id="starPicker">
+            <i class="fa-solid fa-star" data-val="1"></i>
+            <i class="fa-solid fa-star" data-val="2"></i>
+            <i class="fa-solid fa-star" data-val="3"></i>
+            <i class="fa-solid fa-star" data-val="4"></i>
+            <i class="fa-solid fa-star" data-val="5"></i>
+          </div>
+          <p class="tag-hint" id="starLabel">Click a star to rate</p>
+        </div>
+
+        <div class="field">
+          <label>Written review <span style="color:var(--text-3);font-weight:400">(optional, max 1000 chars)</span></label>
+          <textarea id="reviewText" placeholder="Share what it was like working with this person..." style="min-height:100px" maxlength="1000"></textarea>
+        </div>
+
+        <button class="btn btn-primary" onclick="submitRating()" id="submitRatingBtn">
+          <i class="fa-solid fa-paper-plane"></i> Submit rating
+        </button>
+      </div>
+
+      <div class="card fade-in" style="margin-top:20px">
+        <div class="card-title"><i class="fa-solid fa-circle-info"></i> How ratings work</div>
+        <p style="color:var(--text-2);font-size:0.9rem;line-height:1.7">
+          You can only rate someone if you were both part of a <strong style="color:var(--text-1)">completed task</strong> together — either as the task poster or the assigned freelancer. Each user can only be rated once per task by each party. Ratings help the community make better hiring decisions.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="/static/js/auth.js"></script>
+<script>
+if (!getToken()) window.location.href = '/login';
+
+let selectedRating = 0;
+
+// ── Tab switching ──
+function switchTab(tab) {
+  document.getElementById('tab-view').style.display = tab === 'view' ? 'block' : 'none';
+  document.getElementById('tab-give').style.display = tab === 'give' ? 'block' : 'none';
+  document.querySelectorAll('.view-tab').forEach((b, i) => {
+    b.classList.toggle('active', (i === 0 && tab === 'view') || (i === 1 && tab === 'give'));
+  });
+}
+
+// ── Star picker ──
+const starPicker = document.getElementById('starPicker');
+starPicker.querySelectorAll('i').forEach(star => {
+  star.addEventListener('click', () => {
+    selectedRating = parseInt(star.dataset.val);
+    updateStars(selectedRating);
+    document.getElementById('starLabel').textContent = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'][selectedRating] + ` — ${selectedRating} star${selectedRating > 1 ? 's' : ''}`;
+  });
+  star.addEventListener('mouseenter', () => updateStars(parseInt(star.dataset.val)));
+  star.addEventListener('mouseleave', () => updateStars(selectedRating));
+});
+
+function updateStars(val) {
+  starPicker.querySelectorAll('i').forEach(s => {
+    s.classList.toggle('selected', parseInt(s.dataset.val) <= val);
+  });
+}
+
+// ── Helpers ──
+function showMsg(text, type) {
+  const m = document.getElementById('msg');
+  m.textContent = text;
+  m.className = 'msg ' + type;
+  m.style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(() => m.style.display = 'none', 3500);
+}
+
+function escape(s) {
+  return (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function starsHTML(n) {
+  return Array.from({length:5}, (_,i) =>
+    `<i class="fa-solid fa-star ${i < n ? 'filled' : ''}"></i>`
+  ).join('');
+}
+
+function logout() {
+  authFetch(`${API}/auth/logout`, { method: 'POST' }).catch(() => {});
+  clearAuth();
+  window.location.href = '/login';
+}
+
+// ── Load ratings ──
+async function loadRatings(userId) {
+  const id = userId || document.getElementById('searchUserId').value.trim();
+  if (!id) { showMsg('Enter a user ID first', 'error'); return; }
+
+  const container = document.getElementById('ratingsContainer');
+  container.innerHTML = '<div class="loading">Loading ratings</div>';
+
+  try {
+    const res = await authFetch(`${API}/ratings/user/${id}`);
+    const data = await res.json();
+    if (!res.ok) { container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><h3>${escape(data.detail)}</h3></div>`; return; }
+
+    const { ratings, total, average_rating } = data;
+
+    let html = `
+      <div class="avg-score-block fade-in">
+        <div class="avg-number">${average_rating || '—'}</div>
+        <div>
+          <div class="stars-display">${starsHTML(Math.round(average_rating))}</div>
+          <div class="avg-label">${total} review${total !== 1 ? 's' : ''}</div>
+        </div>
+      </div>`;
+
+    if (!ratings.length) {
+      html += `<div class="empty-state"><i class="fa-solid fa-star"></i><h3>No reviews yet</h3><p>This user hasn't received any ratings.</p></div>`;
+    } else {
+      html += ratings.map((r, i) => {
+        const name = r.rater?.full_name || r.rater?.username || 'Anonymous';
+        const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+        const date = r.created_at ? new Date(r.created_at).toLocaleDateString(undefined, {year:'numeric',month:'short',day:'numeric'}) : '';
+        return `
+          <div class="rating-card fade-in" style="animation-delay:${0.05*i}s">
+            <div class="rating-header">
+              <div class="rating-avatar">
+                ${r.rater?.avatar_url ? `<img src="${escape(r.rater.avatar_url)}" alt="">` : initials}
+              </div>
+              <div class="rating-meta">
+                <h4>${escape(name)}</h4>
+                ${r.task?.title ? `<div class="task-name"><i class="fa-solid fa-briefcase" style="font-size:0.7rem"></i> ${escape(r.task.title)}</div>` : ''}
+              </div>
+              <div class="rating-date">${escape(date)}</div>
+            </div>
+            <div class="stars-display">${starsHTML(r.rating)}</div>
+            ${r.review ? `<div class="rating-review">"${escape(r.review)}"</div>` : ''}
+          </div>`;
+      }).join('');
+    }
+
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><h3>Error loading ratings</h3></div>`;
+  }
+}
+
+function loadMyRatings() {
+  const myId = getUserId();
+  if (!myId) { showMsg('Log in first', 'error'); return; }
+  document.getElementById('searchUserId').value = myId;
+  loadRatings(myId);
+}
+
+// ── Submit rating ──
+async function submitRating() {
+  const rateUserId = document.getElementById('rateUserId').value.trim();
+  const rateTaskId = document.getElementById('rateTaskId').value.trim();
+  const review = document.getElementById('reviewText').value.trim();
+
+  if (!rateUserId) { showMsg('Enter the user ID to rate', 'error'); return; }
+  if (!rateTaskId) { showMsg('Enter the task ID', 'error'); return; }
+  if (!selectedRating) { showMsg('Select a star rating', 'error'); return; }
+
+  const btn = document.getElementById('submitRatingBtn');
+  btn.disabled = true;
+  btn.innerHTML = 'Submitting...';
+
+  try {
+    const res = await authFetch(`${API}/ratings/${rateUserId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task_id: rateTaskId, rating: selectedRating, review: review || null })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showMsg('Rating submitted successfully!', 'success');
+      document.getElementById('rateUserId').value = '';
+      document.getElementById('rateTaskId').value = '';
+      document.getElementById('reviewText').value = '';
+      selectedRating = 0;
+      updateStars(0);
+      document.getElementById('starLabel').textContent = 'Click a star to rate';
+    } else {
+      showMsg(data.detail || 'Failed to submit rating', 'error');
+    }
+  } catch(e) {
+    showMsg('Error connecting to server', 'error');
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit rating';
+}
+
+// Auto-load from URL param
+(function() {
+  const p = new URLSearchParams(window.location.search);
+  const uid = p.get('user_id');
+  const tid = p.get('task_id');
+  if (uid || tid) {
+    switchTab('give');
+    if (uid) document.getElementById('rateUserId').value = uid;
+    if (tid) document.getElementById('rateTaskId').value = tid;
+  } else {
+    // Auto-load current user's ratings on page open
+    const myId = getUserId();
+    if (myId) {
+      document.getElementById('searchUserId').value = myId;
+      loadRatings(myId);
+    }
+  }
+})();
+</script>
+</body>
+</html>

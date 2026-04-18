@@ -2,292 +2,217 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SkillBridge - Task Detail</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task detail — SkillBridge</title>
+<link rel="stylesheet" href="/static/css/skillbridge.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="/static/css/browse_task.css">
-<style>
-  .task-detail-card {
-    background: #fff;
-    border-radius: 16px;
-    padding: 36px;
-    max-width: 700px;
-    margin: 40px auto;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  }
-  .task-title { font-size: 1.8rem; font-weight: 600; margin-bottom: 8px; }
-  .task-badges { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-  .badge {
-    padding: 4px 14px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-  }
-  .badge-category { background: #e8f0fe; color: #1a73e8; }
-  .badge-status-open { background: #e6f4ea; color: #2e7d32; }
-  .badge-status-completed { background: #fce8e6; color: #c5221f; }
-  .task-desc { color: #555; line-height: 1.7; margin-bottom: 24px; }
-  .task-meta-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 28px;
-  }
-  .meta-item { display: flex; align-items: center; gap: 10px; color: #444; font-size: 0.92rem; }
-  .meta-item i { color: #1a73e8; width: 18px; }
-  .action-section { border-top: 1px solid #eee; padding-top: 24px; }
-  .apply-form textarea {
-    width: 100%;
-    padding: 12px 16px;
-    border: 1.5px solid #ddd;
-    border-radius: 10px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.9rem;
-    resize: vertical;
-    margin-bottom: 14px;
-    box-sizing: border-box;
-    min-height: 100px;
-  }
-  .apply-form textarea:focus { outline: none; border-color: #1a73e8; }
-  .btn-apply {
-    background: #1a73e8;
-    color: white;
-    border: none;
-    padding: 12px 28px;
-    border-radius: 10px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .btn-apply:hover { background: #1558b0; }
-  .btn-complete {
-    background: #2e7d32;
-    color: white;
-    border: none;
-    padding: 12px 28px;
-    border-radius: 10px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s;
-    margin-right: 12px;
-  }
-  .btn-complete:hover { background: #1b5e20; }
-  .btn-applicants {
-    background: #f57c00;
-    color: white;
-    border: none;
-    padding: 12px 28px;
-    border-radius: 10px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s;
-    text-decoration: none;
-    display: inline-block;
-  }
-  .btn-applicants:hover { background: #e65100; }
-  .success-msg {
-    background: #e6f4ea; color: #2e7d32;
-    padding: 12px 16px; border-radius: 8px;
-    margin-bottom: 16px; font-size: 0.9rem; display: none;
-  }
-  .error-msg {
-    background: #fdecea; color: #c62828;
-    padding: 12px 16px; border-radius: 8px;
-    margin-bottom: 16px; font-size: 0.9rem; display: none;
-  }
-  .back-link { display: inline-block; margin-bottom: 20px; color: #1a73e8; text-decoration: none; font-size: 0.9rem; }
-  .back-link:hover { text-decoration: underline; }
-  .section-label { font-weight: 600; font-size: 1rem; margin-bottom: 12px; }
-  .already-applied {
-    background: #e8f0fe; color: #1a73e8;
-    padding: 12px 16px; border-radius: 8px; font-size: 0.9rem;
-  }
-</style>
-<script src="/static/js/auth.js"></script>
 </head>
 <body>
-<div class="navbar">
-  <h1>SkillBridge</h1>
-  <div>
-    <a href="/browse">Browse Tasks</a>
-    <a href="/post-task">Post Task</a>
-    <a href="/profile">My Profile</a>
-    <a href="#" onclick="logout()">Logout</a>
+
+<nav class="navbar">
+  <div class="brand">SkillBridge</div>
+  <div class="nav-links">
+    <a href="/browse">Browse</a>
+    <a href="/search">Search</a>
+    <a href="/post-task">Post task</a>
+    <a href="/profile">Profile</a>
+    <button class="logout-btn" onclick="logout()">Log out</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container" style="max-width: 760px">
+    <a href="/browse" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to tasks</a>
+
+    <div class="task-detail-card fade-in" id="taskCard">
+      <div class="loading">Loading task</div>
+    </div>
   </div>
 </div>
 
-<div class="main" style="padding: 20px;">
-  <div style="max-width:700px; margin: 0 auto;">
-    <a href="/browse" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Tasks</a>
-  </div>
-
-  <div class="task-detail-card" id="taskCard">
-    <p style="color:#888; text-align:center;">Loading task...</p>
-  </div>
-</div>
-
+<script src="/static/js/auth.js"></script>
 <script>
-  const API = 'http://127.0.0.1:8000';
-  const currentUserId = localStorage.getItem('user_id');
+const currentUserId = getUserId();
+const urlParams = new URLSearchParams(window.location.search);
+const taskId = urlParams.get('id');
 
-  // Get task_id from URL: /task_detail?id=xxxx
-  const urlParams = new URLSearchParams(window.location.search);
-  const taskId = urlParams.get('id');
+if (!getToken()) window.location.href = '/login';
+if (!taskId) window.location.href = '/browse';
 
-  if (!getToken()) { window.location.href = '/login'; }
-  if (!taskId) { window.location.href = '/browse'; }
+function escape(s) {
+  return (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
-  async function loadTask() {
-    try {
-      const res = await authFetch(`${API}/tasks/${taskId}`, {
-        headers: { 'Authorization': `Bearer ${getToken()}` }
-      });
-      const task = await res.json();
-      if (!res.ok) throw new Error(task.detail || 'Failed to load task');
-      renderTask(task);
-    } catch (err) {
-      document.getElementById('taskCard').innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
-    }
-  }
-
-  function renderTask(task) {
-    const isOwner = task.creator_id === currentUserId;
-    const isCompleted = task.status === 'completed';
-    const deadline = task.deadline ? new Date(task.deadline).toLocaleDateString() : 'N/A';
-
-    let actionsHTML = '';
-
-    if (isOwner) {
-      // Owner sees: Mark Complete + View Applicants
-      actionsHTML = `
-        <div class="action-section">
-          <div class="section-label">Task Actions</div>
-          <div id="actionMsg" class="success-msg"></div>
-          <div id="actionErr" class="error-msg"></div>
-          ${!isCompleted ? `<button class="btn-complete" onclick="markComplete()">
-            <i class="fa-solid fa-circle-check"></i> Mark as Complete
-          </button>` : '<span style="color:#2e7d32; font-weight:500;"><i class="fa-solid fa-circle-check"></i> Task Completed</span>'}
-          <a href="/applicants?id=${task.id}" class="btn-applicants">
-            <i class="fa-solid fa-users"></i> View Applicants
-          </a>
-        </div>`;
-    } else if (!isCompleted) {
-      // Other users see: Apply/Bid form
-      actionsHTML = `
-        <div class="action-section">
-          <div class="section-label">Apply for this Task</div>
-          <div id="applySuccess" class="success-msg"></div>
-          <div id="applyError" class="error-msg"></div>
-          <div class="apply-form">
-            <textarea id="applyMsg" placeholder="Write a short message about why you're a good fit..."></textarea>
-            <button class="btn-apply" onclick="applyTask()">
-              <i class="fa-solid fa-paper-plane"></i> Submit Application
-            </button>
-          </div>
-        </div>`;
-    } else {
-      actionsHTML = `<div class="action-section"><p style="color:#888;">This task has been completed.</p></div>`;
-    }
-
+async function loadTask() {
+  try {
+    const res = await authFetch(`${API}/tasks/${taskId}`);
+    const task = await res.json();
+    if (!res.ok) throw new Error(task.detail || 'Failed to load task');
+    renderTask(task);
+  } catch (err) {
     document.getElementById('taskCard').innerHTML = `
-      <div class="task-title">${task.title}</div>
-      <div class="task-badges">
-        <span class="badge badge-category"><i class="fa-solid fa-layer-group"></i> ${task.category || 'General'}</span>
-        <span class="badge badge-status-${task.status === 'completed' ? 'completed' : 'open'}">${task.status?.toUpperCase() || 'OPEN'}</span>
+      <div class="empty-state">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <h3>Couldn't load task</h3>
+        <p>${escape(err.message)}</p>
+      </div>`;
+  }
+}
+
+function renderTask(task) {
+  const isOwner = task.creator_id === currentUserId;
+  const isCompleted = task.status === 'completed';
+  const deadline = task.deadline ? new Date(task.deadline).toLocaleDateString(undefined, {year:'numeric',month:'short',day:'numeric'}) : 'No deadline';
+  const tags = (task.tags || []).map(t => `<span class="tag">${escape(t)}</span>`).join('');
+
+  let actionsHTML = '';
+
+  if (isOwner) {
+    actionsHTML = `
+      <div class="action-section">
+        <div class="section-label">Your task — manage it</div>
+        <div id="actionMsg" class="msg success"></div>
+        <div id="actionErr" class="msg error"></div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap">
+          ${!isCompleted ? `
+            <button class="btn btn-success" onclick="markComplete()">
+              <i class="fa-solid fa-check"></i> Mark complete
+            </button>` : `
+            <span class="badge badge-completed" style="padding:8px 14px">
+              <i class="fa-solid fa-circle-check"></i> Completed
+            </span>`}
+          <a href="/applicants?task_id=${task.id}" class="btn btn-secondary">
+            <i class="fa-solid fa-users"></i> View applicants
+          </a>
+        </div>
+        ${isCompleted ? `
+        <div style="margin-top:16px;padding:14px;background:var(--bg-3);border-radius:var(--r-md);border:1px solid var(--border)">
+          <p style="font-size:0.78rem;color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em">IDs for rating</p>
+          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:6px">Task ID: <code style="color:var(--accent);font-size:0.8rem;word-break:break-all">${task.id}</code></p>
+          ${task.assigned_to ? `<p style="font-size:0.82rem;color:var(--text-2);margin-bottom:10px">Freelancer ID: <code style="color:var(--accent);font-size:0.8rem;word-break:break-all">${task.assigned_to}</code></p>
+          <a href="/ratings?user_id=${task.assigned_to}&task_id=${task.id}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-star"></i> Rate this freelancer
+          </a>` : ""}
+        </div>` : ""}
+      </div>`;
+  } else if (!isCompleted) {
+    actionsHTML = `
+      <div class="action-section">
+        <div class="section-label">Apply for this task</div>
+        <div id="applySuccess" class="msg success"></div>
+        <div id="applyError" class="msg error"></div>
+        <div class="field">
+          <textarea id="applyMsg" placeholder="Why are you a good fit? Keep it short and specific."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="applyTask()">
+          <i class="fa-solid fa-paper-plane"></i> Submit application
+        </button>
+      </div>`;
+  } else {
+    actionsHTML = `
+      <div class="action-section">
+        <p class="text-muted">This task is closed.</p>
+      </div>`;
+  }
+
+  document.getElementById('taskCard').innerHTML = `
+    <h1 class="task-detail-title">${escape(task.title)}</h1>
+    <div class="task-detail-badges">
+      <span class="badge badge-${task.status === 'completed' ? 'completed' : 'open'}">${escape(task.status) || 'open'}</span>
+      ${task.category ? `<span class="tag">${escape(task.category)}</span>` : ''}
+      ${tags}
+    </div>
+    <p class="task-detail-desc">${escape(task.description)}</p>
+    <div class="task-detail-meta">
+      <div class="meta-item budget">
+        <span class="label"><i class="fa-solid fa-coins"></i> Budget</span>
+        <span class="value">Rs. ${escape(task.budget) || '—'}</span>
       </div>
-      <p class="task-desc">${task.description}</p>
-      <div class="task-meta-grid">
-        <div class="meta-item"><i class="fa-solid fa-dollar-sign"></i> Budget: <strong>$${task.budget || 'N/A'}</strong></div>
-        <div class="meta-item"><i class="fa-solid fa-calendar"></i> Deadline: <strong>${deadline}</strong></div>
-        <div class="meta-item"><i class="fa-solid fa-user"></i> Posted by: <strong>${task.creator?.full_name || 'Unknown'}</strong></div>
-        <div class="meta-item"><i class="fa-solid fa-tags"></i> Tags: <strong>${task.tags?.join(', ') || 'None'}</strong></div>
+      <div class="meta-item">
+        <span class="label"><i class="fa-solid fa-calendar"></i> Deadline</span>
+        <span class="value">${escape(deadline)}</span>
       </div>
-      ${actionsHTML}
-    `;
+      <div class="meta-item">
+        <span class="label"><i class="fa-solid fa-user"></i> Posted by</span>
+        <span class="value">${escape(task.creator?.full_name || task.creator?.username || 'Unknown')}</span>
+      </div>
+      ${task.creator?.university ? `
+      <div class="meta-item">
+        <span class="label"><i class="fa-solid fa-graduation-cap"></i> University</span>
+        <span class="value">${escape(task.creator.university)}</span>
+      </div>` : ''}
+    </div>
+    ${actionsHTML}
+  `;
+}
+
+async function applyTask() {
+  const message = document.getElementById('applyMsg').value.trim();
+  const sucDiv = document.getElementById('applySuccess');
+  const errDiv = document.getElementById('applyError');
+  sucDiv.style.display = 'none';
+  errDiv.style.display = 'none';
+
+  if (!message) {
+    errDiv.textContent = 'Write a message before applying.';
+    errDiv.style.display = 'block';
+    return;
   }
 
-  async function applyTask() {
-    const message = document.getElementById('applyMsg').value.trim();
-    const sucDiv = document.getElementById('applySuccess');
-    const errDiv = document.getElementById('applyError');
-    sucDiv.style.display = 'none';
-    errDiv.style.display = 'none';
-
-    if (!message) {
-      errDiv.textContent = 'Please write a message before applying.';
-      errDiv.style.display = 'block';
-      return;
-    }
-
-    try {
-      const res = await authFetch(`${API}/tasks/${taskId}/apply`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getToken()}`
-        },
-        body: JSON.stringify({ message })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        sucDiv.textContent = 'Application submitted successfully!';
-        sucDiv.style.display = 'block';
-        document.getElementById('applyMsg').value = '';
-      } else {
-        errDiv.textContent = data.detail || 'Failed to submit application.';
-        errDiv.style.display = 'block';
-      }
-    } catch (err) {
-      errDiv.textContent = 'Cannot connect to server.';
-      errDiv.style.display = 'block';
-    }
-  }
-
-  async function markComplete() {
-    const sucDiv = document.getElementById('actionMsg');
-    const errDiv = document.getElementById('actionErr');
-    sucDiv.style.display = 'none';
-    errDiv.style.display = 'none';
-
-    if (!confirm('Mark this task as complete?')) return;
-
-    try {
-      const res = await authFetch(`${API}/tasks/${taskId}/complete`, {
-        method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${getToken()}` }
-      });
-      const data = await res.json();
-      if (res.ok) {
-        sucDiv.textContent = 'Task marked as complete!';
-        sucDiv.style.display = 'block';
-        setTimeout(() => loadTask(), 1200);
-      } else {
-        errDiv.textContent = data.detail || 'Failed to mark complete.';
-        errDiv.style.display = 'block';
-      }
-    } catch (err) {
-      errDiv.textContent = 'Cannot connect to server.';
-      errDiv.style.display = 'block';
-    }
-  }
-
-  function logout() {
-    authFetch(`${API}/auth/logout`, {
+  try {
+    const res = await authFetch(`${API}/tasks/${taskId}/apply`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${getToken()}` }
-    }).finally(() => {
-      localStorage.clear();
-      window.location.href = '/login';
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message })
     });
+    const data = await res.json();
+    if (res.ok) {
+      sucDiv.textContent = 'Application submitted.';
+      sucDiv.style.display = 'block';
+      document.getElementById('applyMsg').value = '';
+    } else {
+      errDiv.textContent = data.detail || 'Failed to submit application.';
+      errDiv.style.display = 'block';
+    }
+  } catch (err) {
+    errDiv.textContent = 'Cannot connect to server.';
+    errDiv.style.display = 'block';
   }
+}
 
-  loadTask();
+async function markComplete() {
+  const sucDiv = document.getElementById('actionMsg');
+  const errDiv = document.getElementById('actionErr');
+  sucDiv.style.display = 'none';
+  errDiv.style.display = 'none';
+
+  if (!confirm('Mark this task as complete?')) return;
+
+  try {
+    const res = await authFetch(`${API}/tasks/${taskId}/complete`, { method: 'PATCH' });
+    const data = await res.json();
+    if (res.ok) {
+      sucDiv.textContent = 'Task marked as complete.';
+      sucDiv.style.display = 'block';
+      setTimeout(() => loadTask(), 1000);
+    } else {
+      errDiv.textContent = data.detail || 'Failed to mark complete.';
+      errDiv.style.display = 'block';
+    }
+  } catch (err) {
+    errDiv.textContent = 'Cannot connect to server.';
+    errDiv.style.display = 'block';
+  }
+}
+
+function logout() {
+  authFetch(`${API}/auth/logout`, { method: 'POST' }).finally(() => {
+    clearAuth();
+    window.location.href = '/login';
+  });
+}
+
+loadTask();
 </script>
 </body>
 </html>

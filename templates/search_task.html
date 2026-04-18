@@ -2,101 +2,101 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SkillBridge - Search Tasks</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/css/search_task.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Search — SkillBridge</title>
+<link rel="stylesheet" href="/static/css/skillbridge.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-  .results-section { max-width:900px; margin:30px auto; padding:0 20px; }
-  .results-title { color:white; font-size:18px; margin-bottom:16px; }
-  .tasks-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; }
-  .task-card { background:white; border-radius:12px; padding:20px; box-shadow:0 4px 16px rgba(0,0,0,0.15); color:#333; }
-  .task-card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
-  .task-card h3 { font-size:16px; font-weight:600; color:#1a1a1a; flex:1; margin-right:8px; }
-  .status-badge { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:500; white-space:nowrap; }
-  .status-open { background:#e0f7e9; color:#2e7d32; }
-  .status-in_progress { background:#fff3e0; color:#e65100; }
-  .status-completed { background:#fce4ec; color:#c62828; }
-  .task-desc { font-size:13px; color:#555; margin-bottom:12px; line-height:1.5; }
-  .task-meta { display:flex; flex-wrap:wrap; gap:8px; font-size:12px; color:#666; margin-bottom:14px; }
-  .task-meta span { display:flex; align-items:center; gap:4px; }
-  .tag { background:#ede9ff; color:#6c63ff; padding:3px 9px; border-radius:20px; font-size:11px; }
-  .apply-btn { background:#6c63ff; color:white; border:none; padding:9px 18px; border-radius:8px; cursor:pointer; font-family:Poppins; font-size:13px; width:100%; }
-  .apply-btn:hover { background:#5a52e0; }
-  .apply-btn:disabled { background:#aaa; cursor:not-allowed; }
-  .no-results { text-align:center; color:rgba(255,255,255,0.85); padding:40px 0; font-size:15px; }
-  .msg { padding:10px 16px; border-radius:8px; margin:0 20px 16px; display:none; max-width:900px; margin-left:auto; margin-right:auto; }
-  .success { background:#e0f7e9; color:#2e7d32; }
-  .error { background:#fdecea; color:#c62828; }
-  .loading { text-align:center; color:rgba(255,255,255,0.85); padding:30px 0; }
-</style>
-<script src="/static/js/auth.js"></script>
 </head>
 <body>
 
-<div class="navbar">
-  <h1>SkillBridge</h1>
-  <div>
+<nav class="navbar">
+  <div class="brand">SkillBridge</div>
+  <div class="nav-links">
     <a href="/browse">Browse</a>
-    <a href="/search">Search Tasks</a>
-    <a href="/post-task">Post Task</a>
-    <a href="/profile">My Profile</a>
+    <a href="/search">Search</a>
+    <a href="/post-task">Post task</a>
+    <a href="/profile">Profile</a>
+    <button class="logout-btn" onclick="logout()">Log out</button>
   </div>
-</div>
+</nav>
 
-<div class="main">
+<div class="page">
   <div class="container">
-    <h2>Find Micro Tasks</h2>
-    <p class="tagline">Search tasks posted by students</p>
 
-    <form id="searchForm" onsubmit="handleSearch(event)">
+    <div class="page-header fade-in">
+      <div class="eyebrow">Find Work</div>
+      <h1>Search tasks</h1>
+      <p class="subtitle">Narrow by keyword, category, or budget range.</p>
+    </div>
 
-      <label>Keyword</label>
-      <div class="input-group">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="keyword" placeholder="Search by title or description">
+    <div class="card fade-in" style="margin-bottom: 24px">
+      <form id="searchForm" onsubmit="handleSearch(event)">
+        <div class="field">
+          <label>Keyword</label>
+          <div class="input-group">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="keyword" placeholder="Search title or description">
+          </div>
+        </div>
+
+        <div class="filter-grid">
+          <div class="field" style="margin-bottom:0">
+            <label>Category</label>
+            <div class="input-group">
+              <i class="fa-solid fa-layer-group"></i>
+              <input type="text" id="category" placeholder="e.g. Design">
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:0">
+            <label>Min budget</label>
+            <div class="input-group">
+              <i class="fa-solid fa-coins"></i>
+              <input type="number" step="0.01" id="min_budget" placeholder="0">
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:0">
+            <label>Max budget</label>
+            <div class="input-group">
+              <i class="fa-solid fa-coins"></i>
+              <input type="number" step="0.01" id="max_budget" placeholder="10000">
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:0">
+            <label>Status</label>
+            <select id="status_filter">
+              <option value="open">Open</option>
+              <option value="in_progress">In progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-magnifying-glass"></i> Search tasks
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <div id="resultsSection" style="display:none">
+      <div class="results-header">
+        <div class="count"><strong id="resultsCount">0</strong> <span id="resultsLabel">results</span> found</div>
       </div>
+      <div id="tasksGrid"></div>
+    </div>
 
-      <label>Category</label>
-      <div class="input-group">
-        <i class="fa-solid fa-layer-group"></i>
-        <input type="text" id="category" placeholder="Example: Programming">
-      </div>
-
-      <label>Minimum Budget</label>
-      <div class="input-group">
-        <i class="fa-solid fa-dollar-sign"></i>
-        <input type="number" step="0.01" id="min_budget" placeholder="Minimum budget">
-      </div>
-
-      <label>Maximum Budget</label>
-      <div class="input-group">
-        <i class="fa-solid fa-dollar-sign"></i>
-        <input type="number" step="0.01" id="max_budget" placeholder="Maximum budget">
-      </div>
-
-      <label>Status</label>
-      <div class="input-group">
-        <select id="status_filter">
-          <option value="open">Open</option>
-          <option value="in_progress">In Progress</option>
-          <option value="completed">Completed</option>
-        </select>
-      </div>
-
-      <button type="submit"><i class="fa-solid fa-magnifying-glass" style="margin-right:8px"></i>Search Tasks</button>
-    </form>
   </div>
 </div>
 
-<div id="msg" class="msg"></div>
-<div id="resultsSection" class="results-section" style="display:none">
-  <p class="results-title" id="resultsTitle"></p>
-  <div class="tasks-grid" id="tasksGrid"></div>
-</div>
-
+<script src="/static/js/auth.js"></script>
 <script>
-const userId = localStorage.getItem('user_id');
+const userId = getUserId();
 
 function showMsg(text, type) {
   const m = document.getElementById('msg');
@@ -106,66 +106,88 @@ function showMsg(text, type) {
   setTimeout(() => m.style.display = 'none', 3000);
 }
 
+async function logout() {
+  try { await authFetch(`${API}/auth/logout`, { method: 'POST' }); } catch(e) {}
+  clearAuth();
+  window.location.href = '/login';
+}
+
+function escape(s) {
+  return (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 async function handleSearch(e) {
   e.preventDefault();
 
-  const keyword   = document.getElementById('keyword').value.trim();
-  const category  = document.getElementById('category').value.trim();
+  const keyword = document.getElementById('keyword').value.trim();
+  const category = document.getElementById('category').value.trim();
   const min_budget = document.getElementById('min_budget').value;
   const max_budget = document.getElementById('max_budget').value;
-  const status    = document.getElementById('status_filter').value;
+  const status = document.getElementById('status_filter').value;
 
   const params = new URLSearchParams();
-  if (keyword)    params.set('keyword', keyword);
-  if (category)   params.set('category', category);
+  if (keyword) params.set('keyword', keyword);
+  if (category) params.set('category', category);
   if (min_budget) params.set('min_budget', min_budget);
   if (max_budget) params.set('max_budget', max_budget);
-  if (status)     params.set('status_filter', status);
+  if (status) params.set('status_filter', status);
 
   const section = document.getElementById('resultsSection');
-  const grid    = document.getElementById('tasksGrid');
-  const title   = document.getElementById('resultsTitle');
+  const grid = document.getElementById('tasksGrid');
 
   section.style.display = 'block';
-  grid.innerHTML = '<p class="loading">Searching...</p>';
+  grid.innerHTML = '<div class="loading">Searching</div>';
 
   try {
-    const res  = await authFetch(`${API}/tasks/search?${params}`);
+    const res = await authFetch(`${API}/tasks/search?${params}`);
     const data = await res.json();
 
     if (!res.ok) { showMsg(data.detail || 'Search failed', 'error'); grid.innerHTML = ''; return; }
 
     const tasks = data.tasks || [];
-    title.textContent = `${data.total ?? tasks.length} result${tasks.length !== 1 ? 's' : ''} found`;
+    document.getElementById('resultsCount').textContent = data.total ?? tasks.length;
+    document.getElementById('resultsLabel').textContent = (tasks.length === 1 ? 'result' : 'results');
 
     if (tasks.length === 0) {
-      grid.innerHTML = '<p class="no-results">No tasks match your search.</p>';
+      grid.innerHTML = `
+        <div class="empty-state">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <h3>No matches</h3>
+          <p>Try widening your filters or removing the keyword.</p>
+        </div>`;
       return;
     }
 
-    grid.innerHTML = tasks.map(task => {
-      const tags = (task.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+    grid.innerHTML = `<div class="tasks-grid">` + tasks.map((task, i) => {
+      const tags = (task.tags || []).slice(0, 3).map(t => `<span class="tag">${escape(t)}</span>`).join('');
       const canApply = getToken() && task.status === 'open' && task.creator_id !== userId;
       return `
-        <div class="task-card">
+        <div class="task-card fade-in" style="animation-delay:${0.04 * i}s">
           <div class="task-card-header">
-            <h3>${task.title}</h3>
-            <span class="status-badge status-${task.status}">${task.status.replace('_',' ')}</span>
+            <h3>${escape(task.title)}</h3>
+            <span class="badge badge-${task.status}">${task.status.replace('_',' ')}</span>
           </div>
-          <p class="task-desc">${task.description || 'No description'}</p>
+          <p class="task-desc">${escape(task.description) || 'No description'}</p>
           <div class="task-meta">
-            <span><i class="fa-solid fa-wallet"></i> Rs. ${task.budget}</span>
-            <span><i class="fa-solid fa-user"></i> ${task.creator?.full_name || task.creator?.username || 'Unknown'}</span>
-            ${task.category ? `<span><i class="fa-solid fa-tag"></i> ${task.category}</span>` : ''}
+            <span class="budget"><i class="fa-solid fa-coins"></i> Rs. ${escape(task.budget)}</span>
+            <span><i class="fa-solid fa-user"></i> ${escape(task.creator?.full_name || task.creator?.username || 'Unknown')}</span>
+            ${task.category ? `<span><i class="fa-solid fa-tag"></i> ${escape(task.category)}</span>` : ''}
           </div>
-          ${tags ? `<div style="margin-bottom:12px">${tags}</div>` : ''}
-          ${canApply
-            ? `<button class="apply-btn" onclick="applyTask('${task.id}', this)">Apply</button>`
-            : task.status !== 'open' ? `<button class="apply-btn" disabled>${task.status.replace('_',' ')}</button>`
-            : !token ? `<button class="apply-btn" onclick="window.location.href='/login'">Login to Apply</button>`
-            : ''}
+          ${tags ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">${tags}</div>` : ''}
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="window.location.href='/task_detail?id=${task.id}'">
+              <i class="fa-solid fa-arrow-right"></i> Details
+            </button>
+            ${canApply
+              ? `<button class="btn btn-primary btn-sm" onclick="applyTask('${task.id}', this)">
+                   <i class="fa-solid fa-paper-plane"></i> Apply
+                 </button>`
+              : !getToken()
+                ? `<button class="btn btn-primary btn-sm" onclick="window.location.href='/login'">Log in to apply</button>`
+                : ''}
+          </div>
         </div>`;
-    }).join('');
+    }).join('') + `</div>`;
 
   } catch(e) {
     showMsg('Error connecting to server', 'error');
@@ -175,36 +197,35 @@ async function handleSearch(e) {
 
 async function applyTask(taskId, btn) {
   if (!getToken()) return window.location.href = '/login';
-  const msg = prompt('Enter your message/bid:') || '';
+  const msg = prompt('Write a short message for the task poster:') || '';
   btn.disabled = true;
-  btn.textContent = 'Applying...';
+  btn.innerHTML = 'Applying...';
   try {
     const res = await authFetch(`${API}/tasks/${taskId}/apply?message=${encodeURIComponent(msg)}`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${getToken()}` }
+      method: 'POST'
     });
     const data = await res.json();
     if (res.ok) {
-      showMsg('Applied successfully!', 'success');
-      btn.textContent = 'Applied';
+      showMsg('Application sent.', 'success');
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Applied';
     } else {
       showMsg(data.detail || 'Failed to apply', 'error');
       btn.disabled = false;
-      btn.textContent = 'Apply';
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Apply';
     }
   } catch(e) {
     showMsg('Error applying', 'error');
     btn.disabled = false;
-    btn.textContent = 'Apply';
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Apply';
   }
 }
 
-// Auto-search if URL has query params (e.g. navigated from another page)
+// Auto-search if URL has query params
 (function() {
   const p = new URLSearchParams(window.location.search);
   if (p.toString()) {
-    if (p.get('keyword'))    document.getElementById('keyword').value = p.get('keyword');
-    if (p.get('category'))   document.getElementById('category').value = p.get('category');
+    if (p.get('keyword')) document.getElementById('keyword').value = p.get('keyword');
+    if (p.get('category')) document.getElementById('category').value = p.get('category');
     if (p.get('min_budget')) document.getElementById('min_budget').value = p.get('min_budget');
     if (p.get('max_budget')) document.getElementById('max_budget').value = p.get('max_budget');
     if (p.get('status_filter')) document.getElementById('status_filter').value = p.get('status_filter');
